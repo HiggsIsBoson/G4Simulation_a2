@@ -1,0 +1,27 @@
+/control/verbose 1
+/run/verbose 1
+/vis/verbose errors
+
+# Try OGL first
+/vis/open OGL 600x600-0+0
+/vis/viewer/set/style surface
+/vis/scene/create
+/vis/scene/add/volume
+/vis/scene/add/axes 0 0 0 5 cm
+/vis/sceneHandler/attach
+/vis/viewer/set/autoRefresh true
+/tracking/verbose 0
+
+# Analysis defaults
+#/run/numberOfThreads 1
+/run/initialize
+/analysis/out ../analysis/nai_p2_100.root
+/analysis/a 2.5
+/analysis/b 0.01
+/analysis/c 0.0
+
+# Source parameter
+/source/p2 1.0
+
+# Beam
+/run/beamOn 10000
