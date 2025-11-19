@@ -24,10 +24,15 @@ void RunAction::Book(){
   
   // ★ Ntuple (event-by-event)
   man->CreateNtuple("nai", "NaI energy deposit per event");
-  man->CreateNtupleDColumn("rawE");   // double カラム
-  man->CreateNtupleDColumn("smE");   // double カラム
-  man->CreateNtupleDColumn("trE");
-  man->CreateNtupleIColumn("Origin");     // int カラム (0=None,1=phot,2=compt)
+
+  fNtColEdep   = man->CreateNtupleDColumn("rawE"); // raw
+  fNtColEsm    = man->CreateNtupleDColumn("smE"); // smeared
+  fNtColOrigin = man->CreateNtupleIColumn("Origin");     // 0/1/2 etc
+  fNtColE1     = man->CreateNtupleDColumn("trE1");
+  fNtColE2     = man->CreateNtupleDColumn("trE2");
+  fNtColE3     = man->CreateNtupleDColumn("trE3");
+  fNtColHitNaI = man->CreateNtupleIColumn("HitNaI");     // 0..7 のビット
+
   man->FinishNtuple();
 }
 
@@ -35,6 +40,7 @@ void RunAction::BeginOfRunAction(const G4Run*){ Book(); }
 
 void RunAction::EndOfRunAction(const G4Run*){
   auto man = G4AnalysisManager::Instance();
+  man->AddNtupleRow();
   man->Write();
   man->CloseFile();
 }

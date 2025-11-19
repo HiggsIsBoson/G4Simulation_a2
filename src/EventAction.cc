@@ -2,6 +2,7 @@
 #include "RunAction.hh"
 #include "PsEventInfo.hh"
 #include <G4AnalysisManager.hh>
+#include <G4RunManager.hh>
 #include <G4Event.hh>
 #include <Randomize.hh>
 
@@ -17,7 +18,7 @@ void EventAction::BeginOfEventAction(const G4Event* evt) {
 void EventAction::EndOfEventAction(const G4Event* evt) {
 
   auto man = G4AnalysisManager::Instance();
-
+  auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
   auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation());
   int originCode = 0;
   /*
@@ -39,14 +40,29 @@ void EventAction::EndOfEventAction(const G4Event* evt) {
 			     fRun->GetC()*fRun->GetC());
   fEdep_smeared_keV = G4RandGauss::shoot(E, sigma);
 
-  man->FillNtupleDColumn(0, fEdep_keV);  // Edep
-  man->FillNtupleDColumn(1, fEdep_smeared_keV);  // Edep (smeared)
-  man->FillNtupleDColumn(2, fTruthE_keV); // truth sum
-  man->FillNtupleIColumn(3, originCode); // Origin分類
-  man->AddNtupleRow();                   // ★ 1イベントごとに呼ぶ
+  // Fill
+  man->FillNtupleDColumn(run->GetNtColEdep(),   fEdep_keV);
+  man->FillNtupleDColumn(run->GetNtColEsm(),    fEdep_smeared_keV);
+  man->FillNtupleIColumn(run->GetNtColOrigin(), originCode);
+  //std::cout << "aaa1 " << fE1 << std::endl;
+  man->FillNtupleDColumn(run->GetNtColE1(), fE1);
+  man->FillNtupleDColumn(run->GetNtColE2(), fE2);
+  man->FillNtupleDColumn(run->GetNtColE3(), fE3);
+  man->FillNtupleIColumn(run->GetNtColHitNaI(), fHitNaI);
 
-  // Reset for the next event
-  fEdep_keV = 0.0; 
+  man->AddNtupleRow(); 
+
+  // Reset
+  fEdep_keV = 0.0;
   fEdep_smeared_keV = 0.0;
   fTruthE_keV = 0.0;
+  fHitNaI = 0;
+  fE1 = fE2 = fE3 = 0.0;
+
+  // Event counter
+  G4int evtID = evt->GetEventID(); 
+  if ((evtID+1) % 10000 == 0) {
+    G4cout << ">>> Event " << std::setw(8) << evtID+1 << " finished" << G4endl;
+  }
+
 }

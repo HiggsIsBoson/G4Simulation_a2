@@ -1,4 +1,6 @@
 #include "PrimaryGeneratorAction.hh"
+#include "RunAction.hh"
+#include "EventAction.hh"
 #include <G4ParticleDefinition.hh>
 #include <G4ParticleGun.hh>
 #include <G4Gamma.hh>
@@ -7,6 +9,8 @@
 #include <Randomize.hh>
 #include <G4GenericMessenger.hh>
 #include <G4SystemOfUnits.hh>
+#include <G4RunManager.hh>
+#include <G4AnalysisManager.hh>
 
 PrimaryGeneratorAction::PrimaryGeneratorAction() : fP2(0.5) {
   fGun = new G4ParticleGun(1);
@@ -28,10 +32,10 @@ G4ThreeVector PrimaryGeneratorAction::RandomPointInSilica() const {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
-  auto shoot = [&](G4double E, const G4ThreeVector& dir){
+  auto shoot = [&](G4double E, const G4ThreeVector& dir, const G4ThreeVector &pos){
     fGun->SetParticleEnergy(E);
     fGun->SetParticleMomentumDirection(dir);
-    fGun->SetParticlePosition(RandomPointInSilica());
+    fGun->SetParticlePosition(pos);
     fGun->GeneratePrimaryVertex(evt);
   };
 
@@ -42,17 +46,27 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
     // 2γ back-to-back 511 keV
     G4ThreeVector d = G4RandomDirection();
     const double E = 511.;
-    shoot(E*keV, d);
-    shoot(E*keV, -d);
-  } else {
+    G4ThreeVector pos = RandomPointInSilica();
+    shoot(E*keV, d, pos);
+    shoot(E*keV, -d, pos);
+
+    // Record the enegies
+    auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
+    auto man = G4AnalysisManager::Instance();
+    auto evtAction = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
+    if (evtAction) evtAction->SetGenEs(E, E, 0.);
+    
+  } else {    
+    /*
     // 3γ continuum (simple approximate sampler summing to 1022 keV)
-    // Note: Replace with Ore–Powell for high fidelity later
     G4double E1 = 1022.*keV*G4UniformRand();
     G4double E2 = (1022.*keV - E1)*G4UniformRand();
     G4double E3 = 1022.*keV - E1 - E2;
     shoot(E1, G4RandomDirection());
     shoot(E2, G4RandomDirection());
     shoot(E3, G4RandomDirection());
+    */
+    Generate3Gamma_OrePowell(evt);
   }
 
 
@@ -75,19 +89,49 @@ void PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* evt) {
     auto c23 = dir[1].dot(dir[2]);
     auto c31 = dir[2].dot(dir[0]);
 
-    // Ore–Powell に対応する角度重み w (比例でOK)
-    G4double w = std::pow(1 - c12, 2) + std::pow(1 - c23, 2) + std::pow(1 - c31, 2);
+    // Ore–Powell に対応する重み
+    const G4double me_keV = 511.0;               // m_e in keV
+    G4double x1 = (Ei[0]/keV) / me_keV;
+    G4double x2 = (Ei[1]/keV) / me_keV;
+    G4double x3 = (Ei[2]/keV) / me_keV;
+    
+    // 物理域チェック：0<x_i<1 かつ x1+x2+x3=2 （RAMBOの和はEcm=1022 keVだから自動で2）
+    if (x1<=0 || x1>=0.99 || x2<=0 || x2>0.99 || x3<=0 || x3>0.99) continue;
+    
+    G4double den = (1-x1)*(1-x2)*(1-x3);
+    if (den <= 0) continue;
+    
+    G4double num = x1*x1*(1-x1)*(1-x1)
+      + x2*x2*(1-x2)*(1-x2)
+      + x3*x3*(1-x3)*(1-x3);
+    
+    G4double w = num / den;   // 比例でOK（正規化不要）
+
+    // angle term
+    w *= std::pow(1 - c12, 2) + std::pow(1 - c23, 2) + std::pow(1 - c31, 2);      
 
     // 安全に上限（大きめ）を置く。最大はだいたい ~8 未満なので 9 に設定
-    constexpr G4double WMAX = 9.0;
+    constexpr G4double WMAX = 400;
+    if(w > WMAX){
+      std::cout << "weight:" << w << " > WMAX " << WMAX << std::endl;
+      //abort();
+    }
     if (G4UniformRand() * WMAX < w) {
       // 受理：3 本のフォトンを発射
+      G4ThreeVector pos = RandomPointInSilica();
       for (int i=0;i<3;++i) {
         fGun->SetParticleEnergy(Ei[i]);
         fGun->SetParticleMomentumDirection(dir[i]);
-	fGun->SetParticlePosition(RandomPointInSilica()); 
+	fGun->SetParticlePosition(pos); 
 	fGun->GeneratePrimaryVertex(evt);
       }
+      // Record the enegies
+      auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
+      auto man = G4AnalysisManager::Instance();
+      auto evtAction = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
+      //std::cout << "bbb1 " << Ei[0]/keV << std::endl;
+      if (evtAction) evtAction->SetGenEs(Ei[0]/keV, Ei[1]/keV, Ei[2]/keV);
+
       return;
     }
   }

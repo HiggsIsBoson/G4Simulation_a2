@@ -13,10 +13,18 @@ class EventAction : public G4UserEventAction {
   void AddEdep(G4double dE_keV) { fEdep_keV += dE_keV; }
   void AddTruthE(G4double e) { fTruthE_keV += e; }
   G4double GetTruthE() const { return fTruthE_keV; }
+
+  void AddHitNaI(int bit) { fHitNaI |= bit; }
+  int  GetHitNaI() const { return fHitNaI; }
+
+  void SetGenEs(G4double e1, G4double e2, G4double e3) { fE1=e1; fE2=e2; fE3=e3; }
+
  private:
   RunAction* fRun{};
   G4double fEdep_keV{0.0};
   G4double fEdep_smeared_keV{0.0};
   G4double fTruthE_keV{0.0};  
+  G4double fE1{0}, fE2{0}, fE3{0};
+  int fHitNaI{0};
 };
 #endif

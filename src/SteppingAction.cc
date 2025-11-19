@@ -11,6 +11,7 @@
 #include <G4VProcess.hh>
 #include <G4LogicalVolumeStore.hh>
 #include <G4Gamma.hh>
+#include <G4EventManager.hh>
 
 SteppingAction::SteppingAction(const DetectorConstruction* det, EventAction* evt)
 : fDet(det), fNaILog(nullptr), fEvt(evt) {}
@@ -62,6 +63,27 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
         }
       }
     }
+  }
+
+  // NaI突入を検出
+  if (postVolL == fNaILog && preVolL != fNaILog) {
+    // このγが何番目かを識別するために parentID を使う
+    int id = track->GetParentID(); // 0ならprimary, >0はsecondary
+
+    // gammaを発射した順番を PrimaryGeneratorAction で track->SetUserInformation に書くか、
+    // あるいは直接 trackID %3 でタグ付けするなど工夫が必要
+    // ここでは簡略化して「track->GetTrackID() % 3」で識別
+    int which = (track->GetTrackID()-1) % 3; // 0,1,2 に対応
+
+    auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
+    auto man = G4AnalysisManager::Instance();
+
+    // 今の値を読み出してビットを立てる
+    auto evt = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
+    if (evt) {
+      evt->AddHitNaI(1 << which);
+    }
+
   }
 
 

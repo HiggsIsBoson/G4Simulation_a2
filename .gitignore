@@ -1,3 +1,4 @@
 analysis/*.root
 *~
 build/
+.DS_Store

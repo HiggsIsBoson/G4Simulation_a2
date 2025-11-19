@@ -15,13 +15,13 @@
 # Analysis defaults
 #/run/numberOfThreads 1
 /run/initialize
-/analysis/out ../analysis/nai_p2_100.root
+/analysis/out ../analysis/nai_p2_050.root
 /analysis/a 2.5
 /analysis/b 0.01
 /analysis/c 0.0
 
 # Source parameter
-/source/p2 1.0
+/source/p2 0.5
 
 # Beam
 /run/beamOn 10000
