@@ -62,14 +62,14 @@ int main(int argc, char** argv) {
   std::cout << "macro_file: " << macro_file << std::endl;
   if (useUI) {
     auto* ui = new G4UIExecutive(argc, argv);
-    std::cout << "aaa1 macro_file " << macro_file << std::endl;
+    std::cout << "Loading macro_file: " << macro_file << std::endl;
     if (!macro_file.empty()) {
       UIman->ApplyCommand("/control/execute ../macros/vis.mac");
     }
     ui->SessionStart();
     delete ui;
   } else if (!macro_file.empty()) {
-    std::cout << "aaa2 macro_file " << macro_file << std::endl;
+    std::cout << "Loading macro_file: " << macro_file << std::endl;
     UIman->ApplyCommand("/control/execute " + macro_file);
   }
 

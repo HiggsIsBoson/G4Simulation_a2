@@ -19,7 +19,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
  private:
   G4ThreeVector RandomPointInSilica() const; // sample inside cylinder (r<=3cm, |z|<=5cm)
   
-  void Generate3Gamma_OrePowell(G4Event* evt);
+  std::vector<G4double> Generate3Gamma_OrePowell(G4Event* evt);
   
   // RAMBO風 3 質量ゼロ粒子生成（合計エネルギー=Ecm）
   void Rambo3(const G4double Ecm,

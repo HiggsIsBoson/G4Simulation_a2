@@ -6,7 +6,7 @@
 #/run/numberOfThreads 1
 /run/initialize
 /analysis/out ../analysis/out.root
-/analysis/a 2.5
+/analysis/a 0.52
 /analysis/b 0.01
 /analysis/c 0.0
 

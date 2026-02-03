@@ -9,9 +9,20 @@
 EventAction::EventAction(RunAction* run): fRun(run){}
 
 void EventAction::BeginOfEventAction(const G4Event* evt) {
-  fEdep_keV = 0.0;
-  auto* info = new PsEventInfo();
-  const_cast<G4Event*>(evt)->SetUserInformation(info);
+
+  fEdep_keV         = 0.0;
+  fEdep_smeared_keV = 0.0;
+  fTruthE_keV       = 0.0;
+  fE1 = fE2 = fE3   = 0.0;
+  fHitNaI           = 0;
+
+  fEdepPhoto_keV    = 0.0;
+  fEdepCompt_keV    = 0.0;
+
+  if (!evt->GetUserInformation()) {
+    auto* info = new PsEventInfo();
+    const_cast<G4Event*>(evt)->SetUserInformation(info);
+  }
 
 }
 
@@ -19,20 +30,37 @@ void EventAction::EndOfEventAction(const G4Event* evt) {
 
   auto man = G4AnalysisManager::Instance();
   auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
+
+  int originCode = 0; // 0=None, 1=photo, 2=compt
+  if (fEdepPhoto_keV > fEdepCompt_keV && fEdepPhoto_keV > 0.0) {
+    originCode = 1;
+  } else if (fEdepCompt_keV > 0.0) {
+    originCode = 2;
+  }
+
+  // PsEventInfo
+  if (auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation())) {
+    if (originCode == 1)      info->SetOrigin(GammaOrigin::Photo);
+    else if (originCode == 2) info->SetOrigin(GammaOrigin::Compton);
+    else                      info->SetOrigin(GammaOrigin::None);
+
+    auto Egamma = info->GetGenGammaEnergies();
+    //std::cout << "ggg1 " << Egamma.size() << std::endl; 
+    if(Egamma.size()>=1) fE1 = Egamma[0];
+    if(Egamma.size()>=2) fE2 = Egamma[1];
+    if(Egamma.size()>=3) fE3 = Egamma[2];
+  }
+
+  
+  /*
   auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation());
   int originCode = 0;
-  /*
+
   if (info) {
     if (info->GetOrigin()==GammaOrigin::Photo) originCode = 1;
     else if (info->GetOrigin()==GammaOrigin::Compton) originCode = 2;
   }
   */
-
-  if(fabs(fEdep_keV-511.)<1. || fabs(fEdep_keV-2*511.)<1.){
-    originCode = int(GammaOrigin::Photo);
-  }else{
-    originCode = int(GammaOrigin::Compton);
-  }
 
   const double E = fEdep_keV;
   G4double sigma = std::sqrt(fRun->GetA()*fRun->GetA()*E +
@@ -44,7 +72,6 @@ void EventAction::EndOfEventAction(const G4Event* evt) {
   man->FillNtupleDColumn(run->GetNtColEdep(),   fEdep_keV);
   man->FillNtupleDColumn(run->GetNtColEsm(),    fEdep_smeared_keV);
   man->FillNtupleIColumn(run->GetNtColOrigin(), originCode);
-  //std::cout << "aaa1 " << fE1 << std::endl;
   man->FillNtupleDColumn(run->GetNtColE1(), fE1);
   man->FillNtupleDColumn(run->GetNtColE2(), fE2);
   man->FillNtupleDColumn(run->GetNtColE3(), fE3);

@@ -19,6 +19,9 @@ class EventAction : public G4UserEventAction {
 
   void SetGenEs(G4double e1, G4double e2, G4double e3) { fE1=e1; fE2=e2; fE3=e3; }
 
+  void AddPhotoEdep(G4double dE_keV) { fEdepPhoto_keV += dE_keV; }
+  void AddComptEdep(G4double dE_keV) { fEdepCompt_keV += dE_keV; }
+
  private:
   RunAction* fRun{};
   G4double fEdep_keV{0.0};
@@ -26,5 +29,8 @@ class EventAction : public G4UserEventAction {
   G4double fTruthE_keV{0.0};  
   G4double fE1{0}, fE2{0}, fE3{0};
   int fHitNaI{0};
+
+  G4double fEdepPhoto_keV{0.0};
+  G4double fEdepCompt_keV{0.0};
 };
 #endif

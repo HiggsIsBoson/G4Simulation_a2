@@ -33,10 +33,9 @@ void plot()
 
     h0->SetLineWidth(2);
     h1->SetLineWidth(2);
-
-    // smE を smE で重み付けして draw
-    t0->Draw("smE>>h0", "smE", "goff");
-    t1->Draw("smE>>h1", "smE", "goff");
+     
+    t0->Draw("smE>>h0", "", "goff");
+    t1->Draw("smE>>h1", "", "goff");
 
     // ------------------------------
     // 4. Overlay 描画

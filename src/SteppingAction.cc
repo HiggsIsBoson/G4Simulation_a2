@@ -32,7 +32,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     if (!fNaILog) return;
   }
 
-  // --- NaI 内の γ の最初の相互作用で分類 ---
+  // --- NaI 内の γ の相互作用で分類 ---
   auto* track = step->GetTrack();
   auto* pre   = step->GetPreStepPoint();
   auto* vol   = pre->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
@@ -49,18 +49,18 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     fEvt->AddTruthE(eGamma);
   }
   
-
-  if (vol == fNaILog && track->GetDefinition()==G4Gamma::GammaDefinition()) {
-    auto proc = step->GetPostStepPoint()->GetProcessDefinedStep();
-    if (proc) {
-      auto* info = static_cast<PsEventInfo*>(
-          G4RunManager::GetRunManager()->GetCurrentEvent()->GetUserInformation());
-      if (info && info->GetOrigin()==GammaOrigin::None) {
-        if (proc->GetProcessName()=="phot") {
-          info->SetOrigin(GammaOrigin::Photo);
-        } else if (proc->GetProcessName()=="compt") {
-          info->SetOrigin(GammaOrigin::Compton);
-        }
+  // ★ NaI 内でのエネルギー deposit をプロセス別に分類
+  if (vol == fNaILog) {
+    G4double dE_keV = step->GetTotalEnergyDeposit() / keV;
+    if (dE_keV > 0.0) {
+      auto proc = step->GetPostStepPoint()->GetProcessDefinedStep();
+      if (proc) {
+	auto name = proc->GetProcessName();
+	if (name == "phot") {
+	  fEvt->AddPhotoEdep(dE_keV);
+	} else if (name == "compt") {
+	  fEvt->AddComptEdep(dE_keV);
+	}
       }
     }
   }
@@ -68,7 +68,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
   // NaI突入を検出
   if (postVolL == fNaILog && preVolL != fNaILog) {
     // このγが何番目かを識別するために parentID を使う
-    int id = track->GetParentID(); // 0ならprimary, >0はsecondary
+    //int id = track->GetParentID(); // 0ならprimary, >0はsecondary
 
     // gammaを発射した順番を PrimaryGeneratorAction で track->SetUserInformation に書くか、
     // あるいは直接 trackID %3 でタグ付けするなど工夫が必要

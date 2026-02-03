@@ -12,6 +12,8 @@
 #include <G4RunManager.hh>
 #include <G4AnalysisManager.hh>
 
+#include <algorithm>  
+
 PrimaryGeneratorAction::PrimaryGeneratorAction() : fP2(0.5) {
   fGun = new G4ParticleGun(1);
   fGamma = G4Gamma::GammaDefinition();
@@ -39,6 +41,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
     fGun->GeneratePrimaryVertex(evt);
   };
 
+  std::vector<G4double> genEs;
+
   // 1.2745 MeV de-excitation gamma
   //shoot(1274.5*keV, G4RandomDirection());
 
@@ -49,6 +53,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
     G4ThreeVector pos = RandomPointInSilica();
     shoot(E*keV, d, pos);
     shoot(E*keV, -d, pos);
+
+    genEs.push_back(E);
+    genEs.push_back(E);
 
     // Record the enegies
     auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
@@ -66,20 +73,35 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
     shoot(E2, G4RandomDirection());
     shoot(E3, G4RandomDirection());
     */
-    Generate3Gamma_OrePowell(evt);
+    genEs = Generate3Gamma_OrePowell(evt);
+    //std::cout << "ggg1 " << genEs[2] << std::endl;
   }
 
+  // sort
+  std::sort(genEs.begin(), genEs.end(), std::greater<G4double>());
+
+  // ★ EventInfo に書き込む
+  auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation());
+  if (!info) {
+    info = new PsEventInfo();
+    evt->SetUserInformation(info);
+  }
+  if(info) info->SetGenGammaEnergies(genEs);
 
 }
 
 
+std::vector<G4double> PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* evt) {
 
-void PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* evt) {
+  std::vector<G4double> genEs;
+
   constexpr G4double Ecm = 2.0 * 511.0 * keV; // o-Ps 静止系の全エネルギー
 
   // 受理・棄却ループ
   constexpr int MAX_TRY = 10000;
   for (int itry = 0; itry < MAX_TRY; ++itry) {
+    genEs.clear();
+
     std::array<G4ThreeVector,3> dir;
     std::array<G4double,3>      Ei;
     Rambo3(Ecm, dir, Ei); // 運動量保存・質量ゼロ
@@ -119,20 +141,21 @@ void PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* evt) {
     if (G4UniformRand() * WMAX < w) {
       // 受理：3 本のフォトンを発射
       G4ThreeVector pos = RandomPointInSilica();
+      genEs.clear();
       for (int i=0;i<3;++i) {
         fGun->SetParticleEnergy(Ei[i]);
         fGun->SetParticleMomentumDirection(dir[i]);
 	fGun->SetParticlePosition(pos); 
 	fGun->GeneratePrimaryVertex(evt);
+	genEs.push_back(Ei[i]);
       }
       // Record the enegies
       auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
       auto man = G4AnalysisManager::Instance();
       auto evtAction = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
-      //std::cout << "bbb1 " << Ei[0]/keV << std::endl;
       if (evtAction) evtAction->SetGenEs(Ei[0]/keV, Ei[1]/keV, Ei[2]/keV);
 
-      return;
+      return genEs;
     }
   }
 
@@ -141,12 +164,16 @@ void PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* evt) {
     std::array<G4ThreeVector,3> dir;
     std::array<G4double,3>      Ei;
     Rambo3(Ecm, dir, Ei);
+    genEs.clear();
     for (int i=0;i<3;++i) {
       fGun->SetParticleEnergy(Ei[i]);
       fGun->SetParticleMomentumDirection(dir[i]);
       fGun->GeneratePrimaryVertex(evt);
+      genEs.push_back(Ei[i]);
     }
   }
+
+  return genEs;
 }
 
 // ===== RAMBO風：3 質量ゼロ粒子（γ）を Ecm で等方・等体積サンプル =====
