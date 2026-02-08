@@ -17,8 +17,6 @@ class EventAction : public G4UserEventAction {
   void AddHitNaI(int bit) { fHitNaI |= bit; }
   int  GetHitNaI() const { return fHitNaI; }
 
-  void SetGenEs(G4double e1, G4double e2, G4double e3) { fE1=e1; fE2=e2; fE3=e3; }
-
   void AddPhotoEdep(G4double dE_keV) { fEdepPhoto_keV += dE_keV; }
   void AddComptEdep(G4double dE_keV) { fEdepCompt_keV += dE_keV; }
 

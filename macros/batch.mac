@@ -1,0 +1,11 @@
+/control/verbose 1
+/run/verbose 1
+
+# Analysis defaults
+/run/initialize
+/analysis/a 0.52
+/analysis/b 0.0
+/analysis/c 0.0
+
+# Beam
+/run/beamOn 1000

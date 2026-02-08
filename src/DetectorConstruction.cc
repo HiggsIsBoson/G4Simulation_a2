@@ -47,11 +47,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
   auto silicaL = new G4LogicalVolume(silicaS, fMatSiO2, "silicaL");
   new G4PVPlacement(nullptr, {}, silicaL, "silicaP", worldL, false, 0);
 
-  // Thin plastic scint in front of +x side face (not used in scoring but present)
-  auto plateS = new G4Box("plateS", 0.25*mm, fSilicaR, fSilicaHL);
-  auto plateL = new G4LogicalVolume(plateS, fMatPlastic, "plateL");
-  new G4PVPlacement(nullptr, G4ThreeVector(fSilicaR+0.25*mm,0,0), plateL, "plateP", worldL, false, 0);
-
   // NaI block 5×5×20 cm^3, center at +x right next to cylinder (+ small gap)
   auto naiS = new G4Box("naiS", fNaISX, fNaISY, fNaISZ);
   fNaILogic = new G4LogicalVolume(naiS, fMatNaI, "naiL");

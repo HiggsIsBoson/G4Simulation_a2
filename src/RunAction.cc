@@ -10,6 +10,7 @@ RunAction::RunAction() : fa(2.5), fb(0.01), fc(0.0), fOutName("nai_spectrum") {
   fMsg->DeclareProperty("b", fb, "Resolution param b (fraction)");
   fMsg->DeclareProperty("c", fc, "Resolution param c (keV)");
   fMsg->DeclareProperty("out", fOutName, "Output base filename (no extension)");
+  std::cout << "aaa2 " << fOutName << std::endl;
 }
 
 RunAction::~RunAction(){ delete fMsg; }

@@ -46,6 +46,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
   // 1.2745 MeV de-excitation gamma
   //shoot(1274.5*keV, G4RandomDirection());
 
+  genEs.clear();
+    
   if (G4UniformRand() < fP2) {
     // 2γ back-to-back 511 keV
     G4ThreeVector d = G4RandomDirection();
@@ -56,25 +58,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
 
     genEs.push_back(E);
     genEs.push_back(E);
-
-    // Record the enegies
-    auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
-    auto man = G4AnalysisManager::Instance();
-    auto evtAction = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
-    if (evtAction) evtAction->SetGenEs(E, E, 0.);
     
   } else {    
-    /*
-    // 3γ continuum (simple approximate sampler summing to 1022 keV)
-    G4double E1 = 1022.*keV*G4UniformRand();
-    G4double E2 = (1022.*keV - E1)*G4UniformRand();
-    G4double E3 = 1022.*keV - E1 - E2;
-    shoot(E1, G4RandomDirection());
-    shoot(E2, G4RandomDirection());
-    shoot(E3, G4RandomDirection());
-    */
+
     genEs = Generate3Gamma_OrePowell(evt);
-    //std::cout << "ggg1 " << genEs[2] << std::endl;
+
   }
 
   // sort
@@ -147,13 +135,8 @@ std::vector<G4double> PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* 
         fGun->SetParticleMomentumDirection(dir[i]);
 	fGun->SetParticlePosition(pos); 
 	fGun->GeneratePrimaryVertex(evt);
-	genEs.push_back(Ei[i]);
+	genEs.push_back(Ei[i]/keV);
       }
-      // Record the enegies
-      auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
-      auto man = G4AnalysisManager::Instance();
-      auto evtAction = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
-      if (evtAction) evtAction->SetGenEs(Ei[0]/keV, Ei[1]/keV, Ei[2]/keV);
 
       return genEs;
     }
