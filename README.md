@@ -83,14 +83,15 @@ make -j 8
 #### 6. テストスクリプトを走らせる
 `build/`の中で
 ```
-./nai_spectrum ../macros/batch.mac -p 100 -out ../analysis/nai_p2_100.root
+./nai_spectrum ../macros/batch.mac --p2 1.0 --out  ../analysis/nai_p2_100.root
 ```
 を実行。無事に終了すれば`../analysis/nai_p2_100.root`というファイルが生成される。
-ここで`100`は2γと3γの割合を表していて、 `100`は100% 2γという意味である。
+ここで`100`は全体に占める2γイベントの割合を表していて、 `100`は100% 2γという意味である。
+出力ファイル名は`--out`から指定できる。
 
 3γだけを作りたい場合は:
 ```
-./nai_spectrum ../macros/batch.mac -p 0 -out ../analysis/nai_p2_000.root
+./nai_spectrum ../macros/batch.mac --p2 0.0 --out  ../analysis/nai_p2_000.root
 ```
 とすればよい。
 
