@@ -135,14 +135,14 @@ GUIを使用する場合と, そうでない場合 ("batch"と呼ぶ) で設定�
 /analysis/c 0.0
 ```
 `a`はstocastic term, `b`はnoise term, `c`はconstant termと呼ばれていて, それぞれシンチレーション光子計数の統計的なふらつき, ノイズの寄与, 検出器の不均一性や不感領域に由来するものである。
-分解能はこれらの係数を使って $\sigma/E = \frac{a}{\sqrt{E~[\mathrm{keV}]}} \oplus \frac{b}{E~[\mathrm{keV}]} \oplus c$ と表されたものを使用している（$\oplus$は二乗和である）。  
+分解能はこれらの係数を使って $\sigma/E = \frac{a}{\sqrt{E~[\mathrm{keV}]}} \oplus \frac{b}{E~[\mathrm{keV}]} \oplus c$ と表されたものを使用している（$\oplus$ は二乗和である）。  
 <br>
 
 ## 出力ファイルの見方
 
 ##### ファイルを開ける
 面倒なことにGeant4の環境は基本的にROOTと共存ができないので, 生成されたROOTファイルを開けて解析するには先に作ってもらったROOTの環境を使う必要があります。
-今いる`g4`の環境をdeactivateしたROOT環境をactivateするか, もうひとつプロンプトのタブ/ウィンドウを開いてそっちはROOT環境を起動しましょう。  
+今いる`g4`の環境をdeactivateしてROOT環境をactivateするか, もうひとつプロンプトのタブ/ウィンドウを開いてそっちはROOT環境を起動しましょう。  
 
 `G4Simulation_a2-main/`にいる想定でファイルを開けるには
 ```
