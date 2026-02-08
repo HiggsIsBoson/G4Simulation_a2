@@ -101,6 +101,10 @@ make -j 8
 ```
 のように別の設定ファイルを用意したので, それを呼んであげればよい。
 
+<img width="500" height="450" alt="Screenshot 2026-02-09 at 1 03 25" src="https://github.com/user-attachments/assets/37b50789-06ed-4420-a605-ed17a8101fa8" />
+
+<br>
+
 
 ## Geant4では何をやっているか？
 
