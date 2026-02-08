@@ -129,8 +129,8 @@ GUIを使用する場合と, そうでない場合 ("batch"と呼ぶ) で設定�
 /analysis/c 0.0
 ```
 `a`はstocastic term, `b`はnoise term, `c`はconstant termと呼ばれていて, それぞれシンチレーション光子計数の統計的なふらつき, ノイズの寄与, 検出器の不均一性や不感領域に由来するものである。
-分解能はこれらの係数を使って $\sigma/E = \frac{a}{\sqrt{E~[\mathrm{keV}]}} \oplus \frac{b}{E~[\mathrm{keV}]} \oplus c$ と表されたものを使用している（$\oplus$は二乗和である）。
-
+分解能はこれらの係数を使って $\sigma/E = \frac{a}{\sqrt{E~[\mathrm{keV}]}} \oplus \frac{b}{E~[\mathrm{keV}]} \oplus c$ と表されたものを使用している（$\oplus$は二乗和である）。  
+<br>
 
 ## 出力ファイルの見方
 
@@ -152,3 +152,8 @@ root -l analysis/nai_p2_100.root
 - `Origin` : 相互作用の種類。最後のstepが光電吸収だったら1, そうじゃなかったら0。コンプトン散乱した後に同じNaI内で光電吸収されたものも含む。
 - `trE1`,`trE2`,`trE3` : 生成したγ線の真のエネルギー。
 - `HitNaI` : NaIの領域を通ったら1, そうでなければ0。NaIの領域を通ったのに透過したイベントを見分けるのに使える。
+
+
+##### エネルギー分布の描画
+```
+nai->Draw("smE","smE>0")
