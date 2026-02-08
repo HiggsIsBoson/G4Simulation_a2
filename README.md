@@ -80,7 +80,7 @@ make -j 8
 うまくいっていれば`nai_spectrum`という実行ファイルが生成されているはず。
 <br>
 
-#### 6. テストスクリプトを走らせる
+#### 6. スクリプトの実行
 `build/`の中で
 ```
 ./nai_spectrum ../macros/batch.mac --p2 1.0 --out  ../analysis/nai_p2_100.root
@@ -89,12 +89,13 @@ make -j 8
 ここで`100`は全体に占める2γイベントの割合を表していて、 `100`は100% 2γという意味である。
 出力ファイル名は`--out`から指定できる。
 
-3γだけを作りたい場合は:
+##### 3γだけを作りたい場合は
 ```
 ./nai_spectrum ../macros/batch.mac --p2 0.0 --out  ../analysis/nai_p2_000.root
 ```
 とすればよい。
 
+##### GUIモード
 またGUIを使って検出器のビジュアルを描画させることもできる。これは
 ```
 ./nai_spectrum ../macros/vis.mac
