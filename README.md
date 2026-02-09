@@ -16,7 +16,7 @@
 
 #### 3. “g4”という名前の環境を作る
 ```
-conda create -n g4
+conda create -n g4 cmake
 ```
 
 #### 4. 環境“ML”に入る
