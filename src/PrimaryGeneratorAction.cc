@@ -25,17 +25,38 @@ PrimaryGeneratorAction::PrimaryGeneratorAction() : fP2(0.5) {
 PrimaryGeneratorAction::~PrimaryGeneratorAction(){ delete fGun; delete fMsg; }
 
 G4ThreeVector PrimaryGeneratorAction::RandomPointInSilica() const {
-  const G4double R  = 1.5*cm; 
-  const G4double HL = 5.0*cm; 
-  
-  // ガラス管の中心 y 座標に合わせる（-0.5cm）
-  const G4double yOffset = -0.5*cm; 
+    // --- 1. DetectorConstruction の設計値と合わせる ---
+    // G4Trd("silicaS", dx1, dx2, dy1, dy2, dz)
+    // 形状パラメータ (half-lengths)
+    const G4double dx  = 1.0*cm;   // dx1, dx2 ともに 1.0
+    const G4double dy1 = 1.0*cm;   // z = -dz 側の y 半長
+    const G4double dy2 = 0.75*cm;  // z = +dz 側の y 半長
+    const G4double dz  = 1.0*cm;   // z 方向の半長
 
-  G4double r   = R * std::sqrt(G4UniformRand());
-  G4double phi = CLHEP::pi + CLHEP::pi * G4UniformRand(); // 180~360度
-  G4double z   = (2*G4UniformRand()-1.) * HL;
+    // 配置位置 (DetectorConstruction より)
+    const G4double x0 = 0.0*cm;
+    const G4double y0 = 3.0*cm;
+    const G4double z0 = -1.0*cm; // z_Silica
 
-  return {r*std::cos(phi), r*std::sin(phi) + yOffset, z};
+    // --- 2. 形状内での一様サンプリング ---
+    // z を一様に決定
+    G4double localZ = dz * (2.0 * G4UniformRand() - 1.0);
+
+    // x を一様に決定
+    G4double localX = dx * (2.0 * G4UniformRand() - 1.0);
+
+    // y は z の位置によって厚みが変わる (線形補間)
+    // z = -dz で dy1, z = +dz で dy2 となるように計算
+    G4double dy_at_z = dy1 + (dy2 - dy1) * (localZ + dz) / (2.0 * dz);
+    G4double localY = dy_at_z * (2.0 * G4UniformRand() - 1.0);
+
+    // --- 3. 配置座標への変換 ---
+    // DetectorConstruction で rotateY(180.*deg) しているため
+    // 局所座標 (x, y, z) -> 全域座標 (-x, y, -z) + Offset となります
+    // (サンプリング範囲が対称なので符号反転は結果に影響しませんが、厳密に反映します)
+    G4ThreeVector pos(-localX + x0, localY + y0, -localZ + z0);
+
+    return pos;
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {

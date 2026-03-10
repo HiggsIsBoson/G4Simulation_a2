@@ -9,8 +9,13 @@ void plot()
     //TFile *f1 = TFile::Open("nai_p2_100_new.root");
 
     //環境に寄せた物
-    TFile *f0 = TFile::Open("3gamma_fixed.root");
-    TFile *f1 = TFile::Open("2gamma_fixed.root");
+    //TFile *f0 = TFile::Open("3gamma_fixed.root");
+    //TFile *f1 = TFile::Open("2gamma_fixed.root");
+    
+    //環境に寄せた物 3/9を反映
+    TFile *f0 = TFile::Open("3gamma_fixed_2.root");
+    TFile *f1 = TFile::Open("2gamma_fixed_2.root");
+
 
     if (!f0 || !f1) {
         std::cerr << "Error: cannot open files" << std::endl;
