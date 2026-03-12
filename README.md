@@ -97,7 +97,7 @@ make -j 8
 
 またGUIを使って検出器のビジュアルを描画させることもできる。これは :
 ```
-./nai_spectrum ../macros/vis.mac
+./nai_spectrum ../macros/vis.mac --ui
 ```
 のように別の設定ファイルを用意したので, それを呼んであげればよい。
 

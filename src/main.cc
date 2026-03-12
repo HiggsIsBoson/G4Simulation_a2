@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
   if (!p2_value.empty()){
     UIman->ApplyCommand("/source/p2 " + p2_value);
   }
-  else{
+  else if(!useUI){
     std::cout << "Specify the p2 parameter from the command line. Abort." << std::endl;
     return 1;
   }
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
   if (!out_name.empty()){
     UIman->ApplyCommand("/analysis/out " + out_name);
   }
-  else{
+  else if(!useUI){
     std::cout << "Specify the output file from the command line. Abort." << std::endl;
     return 1;
   }
