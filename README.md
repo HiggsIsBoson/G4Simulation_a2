@@ -82,7 +82,23 @@ make -j 8
 
 #### 6. 設定ファイルを指定して実行
 
-このシミュレーションには **Mode 1** と **Mode 2** の2つのセットアップがある（`--mode`で切り替え）。
+このシミュレーションには **Mode 1**, **Mode 2**, **Mode 3** の3つのセットアップがある（`--mode`で切り替え）。
+
+---
+
+**Mode 1: Na22のbeta+がプラシンを透過するシミュレーション**
+
+```
+./nai_spectrum --mode 1 --out ../analysis/plastic_sim.root ../macros/batch_mode1.mac
+```
+
+セットアップは以下の通り（z軸上に一列に並ぶ）:
+```
+z=0 mm       z=10 mm              z=50 mm
+Na22線源 →→  [プラシン 0.3mm厚]   [シリカゲル 20×20×20 mm]
+(+z方向)     (半径15mm円盤)        (中心)
+```
+Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損失エネルギーと通過後のbeta+のエネルギー・方向を記録する。
 
 ---
 
@@ -103,19 +119,25 @@ make -j 8
 
 ---
 
-**Mode 1: Na22のbeta+がプラシンを透過するシミュレーション**
+**Mode 3: フルチェーンシミュレーション（Na22 → プラシン → シリカ(Ps形成) → NaI）**
 
 ```
-./nai_spectrum --mode 1 --out ../analysis/plastic_sim.root ../macros/batch_mode1.mac
+./nai_spectrum --mode 3 --p2 0.5 --out ../analysis/full_chain.root ../macros/batch_mode3.mac
 ```
 
-セットアップは以下の通り（z軸上に一列に並ぶ）:
+ここで `--p2` は **pick-off による2γ崩壊の確率**（残り `1-p2` がo-Psの3γ自己崩壊）を指定するオプションである（Mode 2 と同じ意味）。
+
+セットアップは以下の通り:
 ```
-z=0 mm       z=10 mm              z=50 mm
-Na22線源 →→  [プラシン 0.3mm厚]   [シリカゲル 20×20×20 mm]
-(+z方向)     (半径15mm円盤)        (中心)
+z=0 mm      z=10 mm              z=50 mm                    z=115 mm
+Na22線源 →→ [プラシン 0.3mm厚]   [シリカゲル 20×20×20 mm]   ↑y方向
+(+z方向)    (10×10mm角)          (中心)                     [NaI 200×50×50 mm]
+                                                             (底面: y=40 mm, シリカ上面+30 mm)
+                                                             (前面: z=90 mm, シリカ背面+30 mm)
+                                                             (長軸: x方向)
 ```
-Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損失エネルギーと通過後のbeta+のエネルギー・方向を記録する。
+
+Na22から beta+ と 1274.5 keV γ線（等方的）を同時放出し、beta+ がシリカで停止するとポジトロニウム（Ps）が形成されたとみなして2γまたは3γを射出する。1274.5 keV γ線はGeant4の通常のEM物理でNaIまで伝搬される。
 
 ---
 
@@ -124,6 +146,7 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 ```
 ./nai_spectrum --mode 2 --ui ../macros/vis.mac   # Mode 2のジオメトリを表示
 ./nai_spectrum --mode 1 --ui ../macros/vis.mac   # Mode 1のジオメトリを表示
+./nai_spectrum --mode 3 --ui ../macros/vis.mac   # Mode 3のジオメトリを表示
 ```
 
 <img width="500" height="450" alt="Screenshot 2026-02-09 at 1 03 25" src="https://github.com/user-attachments/assets/37b50789-06ed-4420-a605-ed17a8101fa8" />
@@ -140,9 +163,11 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
     - 2γ : 511keVをback-to-backに等方的に生成
     - 3γ : Ore-Powell分布 ([この論文](https://arxiv.org/pdf/hep-ph/0311002)の式16) に従ったエネルギーの組み合わせで, エネルギー・運動量保存を満たしながら等方的に生成
   * Mode 1 : Na22のbeta+スペクトル（endpoint 545.4 keV）でサンプリングしたエネルギーのe+を+z方向に1本生成
+  * Mode 3 : Na22のbeta+（Mode 1と同様）と1274.5 keV γ線を同時に放出。beta+/gamma は各々GeantにE&M物理でシミュレートされる。
 - Step 単位の処理の設定 (`src/SteppingAction.cc`) : 粒子と検出器の相互作用はstep by stepで行われる（散乱, シャワー発展）。ステップ自体のシミュレーションはGeant4がやってくれるが, その各ステップの始まり・終わりに行う処理はユーザーが指定できる。
   * Mode 2 : そのstepでNaIに落とされたエネルギーを加算したり, 相互作用の種類 (光電効果・コンプトン散乱 etc.) の情報を取ってきてeventレベルの処理に送っている。
   * Mode 1 : プラシン内でe+が落とすエネルギーを積算し, プラシンを抜けた瞬間のe+のエネルギーと方向を記録する。
+  * Mode 3 : Mode 1 と同様にe+の停止を検出し、シリカ停止時にGeant4の対消滅γ線をキャンセルして代わりにPs由来の2γ/3γを生成する。NaIに落とされたエネルギーを積算する（Ps由来かどうかも区別して積算）。
 - Event 単位の処理の設定 (`src/EventAction.cc`) : 一連のstepを束ねたものがeventである。Stepと同様, Eventの最初と最後にやる処理はユーザーで定義できる。ここでは各モードで必要な物理量をまとめてファイルに書き出している。
 - Run 単位の処理の設定 (`src/RunAction.cc`) : Eventを束ねたものがRunである。ここではファイルに書き出す変数などの定義を行っている。Mode 1とMode 2でntupleの構造が異なる。
 - メイン関数 (`src/main.cc`) : 実行ファイルで実際に実行しているもの。コマンドで指定したオプションや設定ファイルの読み込み, 上で言及した個別要素の呼び出しなどを行っている。
@@ -151,7 +176,8 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 - `World`という, 検出器の外の空気の領域を定義 (50cm×50cm×50cm)
 - モードによって配置するジオメトリが変わる:
   * **Mode 2** : シリカ円筒（半径3cm, 長さ10cm）とNaI直方体（5×5×20cm）を配置
-  * **Mode 1** : プラシン円盤（半径15mm, 厚さ0.3mm, z=10mm）とシリカ直方体（2×2×2cm, z=50mm）を配置
+  * **Mode 1** : プラシン正方形（10×10mm, 厚さ0.3mm, z=10mm）とシリカ直方体（2×2×2cm, z=50mm）を配置
+  * **Mode 3** : Mode 1と同じプラシン・シリカに加え, NaI直方体（50×50×200mm, 長軸x方向）をシリカ背面から30mm後方かつシリカ上面から30mm上に配置
   * 寸法などのパラメータはコードの上部で定義している。
 
 #### 設定ファイル
@@ -159,9 +185,10 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 こういうことでプログラムのソースコードにいちいちベタ書きしなくても, 設定ファイルを分けることで効果的に管理することができる（ミスの防止にもつながる）。
 
 GUIを使用する場合と, そうでない場合 ("batch"と呼ぶ) で設定ファイルを分けている。
-- `vis.mac` : GUIありのときに呼ぶやつ（Mode 1/2 共通）
+- `vis.mac` : GUIありのときに呼ぶやつ（Mode 1/2/3 共通）
 - `batch_mode2.mac` : Mode 2のバッチ実行用
 - `batch_mode1.mac` : Mode 1のバッチ実行用
+- `batch_mode3.mac` : Mode 3のバッチ実行用
 
 `batch_mode2.mac`の方にある以下行は検出器分解能についての設定である（Mode 2のみ有効）:
 ```
@@ -248,4 +275,37 @@ plastic->Draw("out_E","out_E>0")
 ##### 透過率の計算
 ```
 plastic->GetEntries("out_E>0") / plastic->GetEntries()
+```
+
+---
+
+**Mode 3の出力** (`analysis/full_chain.root`)
+
+```
+root -l analysis/full_chain.root
+```
+
+##### 中身のブランチ（ntupleの名前は`chain`）
+
+エネルギーの単位は全てkeVである。
+- `gen_E` : 生成したbeta+の運動エネルギー [keV]。
+- `plastic_edep` : プラシン内に落としたエネルギー [keV]。
+- `hit_silica` : beta+がシリカに入射したら1。
+- `stop_silica` : beta+がシリカ内で停止したら1（= Ps形成とみなす）。
+- `n_gamma` : Psから生成したγ線の本数（2または3）。`stop_silica==1`のイベントのみ有意。
+- `nai_edep` : NaIに落としたエネルギーの合計 [keV]（真の値）。
+- `nai_edep_sm` : `nai_edep`を検出器分解能でなまらせたもの [keV]。
+- `nai_edep_ps` : そのうちPs由来のγ線が落としたエネルギー [keV]（1274.5 keV γ線の寄与を除いた量）。
+- `nai_edep_ps_sm` : `nai_edep_ps`を分解能でなまらせたもの [keV]。
+- `hit_nai` : NaIに何かが当たったら1。
+
+##### シリカで止まったイベントのNaIエネルギー分布
+```
+chain->Draw("nai_edep_sm","stop_silica==1 && hit_nai==1")
+```
+
+##### Ps由来成分 vs 1274keV γ線成分の比較
+```
+chain->Draw("nai_edep_ps_sm","stop_silica==1 && hit_nai==1","")
+chain->Draw("nai_edep_sm-nai_edep_ps_sm","stop_silica==1 && hit_nai==1","same")
 ```
