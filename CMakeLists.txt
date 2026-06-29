@@ -10,7 +10,9 @@ add_executable(nai_spectrum
   src/PrimaryGeneratorAction.cc
   src/RunAction.cc
   src/EventAction.cc
-  src/SteppingAction.cc)
+  src/SteppingAction.cc
+  src/TrackingAction.cc
+  src/StackingAction.cc)
 
 target_include_directories(nai_spectrum PRIVATE ${PROJECT_SOURCE_DIR}/include)
 

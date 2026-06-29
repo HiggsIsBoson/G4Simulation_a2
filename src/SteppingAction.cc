@@ -1,6 +1,7 @@
 #include "SteppingAction.hh"
 #include "DetectorConstruction.hh"
 #include "EventAction.hh"
+#include "RunAction.hh"
 #include "PsEventInfo.hh"
 
 #include <G4LogicalVolume.hh>
@@ -11,81 +12,135 @@
 #include <G4VProcess.hh>
 #include <G4LogicalVolumeStore.hh>
 #include <G4Gamma.hh>
+#include <G4Positron.hh>
 #include <G4EventManager.hh>
 
 SteppingAction::SteppingAction(const DetectorConstruction* det, EventAction* evt)
-: fDet(det), fNaILog(nullptr), fEvt(evt) {}
+: fDet(det), fNaILog(nullptr), fPlasticLog(nullptr), fEvt(evt) {}
 
 void SteppingAction::UserSteppingAction(const G4Step* step) {
-  
-  // --- deposit を EventAction に蓄積 ---
-  auto edep = step->GetTotalEnergyDeposit();
-  if (edep > 0) {
-    fEvt->AddEdep(edep/keV);
+
+  auto* run = static_cast<const RunAction*>(
+    G4RunManager::GetRunManager()->GetUserRunAction());
+
+  if (run->GetMode() == 1 || run->GetMode() == 3) {
+    // ---- Mode 1/3: track beta+ through plastic and silica ----
+    if (!fPlasticLog) {
+      fPlasticLog = fDet->GetPlasticLogic();
+      if (!fPlasticLog)
+        fPlasticLog = G4LogicalVolumeStore::GetInstance()->GetVolume("plasticL");
+    }
+    if (!fSilicaLog) {
+      fSilicaLog = fDet->GetSilicaLogic();
+      if (!fSilicaLog)
+        fSilicaLog = G4LogicalVolumeStore::GetInstance()->GetVolume("silicaL");
+    }
+    if (!fPlasticLog) return;
+
+    auto* track = step->GetTrack();
+
+    auto preTouch  = step->GetPreStepPoint()->GetTouchableHandle();
+    auto postTouch = step->GetPostStepPoint()->GetTouchableHandle();
+    auto preVol    = preTouch  ? preTouch->GetVolume()  : nullptr;
+    auto postVol   = postTouch ? postTouch->GetVolume() : nullptr;
+    auto preVolL   = preVol  ? preVol->GetLogicalVolume()  : nullptr;
+    auto postVolL  = postVol ? postVol->GetLogicalVolume() : nullptr;
+
+    if (track->GetTrackID() == 1) {
+      // primary e+: plastic / silica tracking
+      if (!fPlasticLog) return;
+
+      if (postVolL == fPlasticLog && preVolL != fPlasticLog)
+        fEvt->SetHitPlastic(1);
+
+      if (preVolL == fPlasticLog) {
+        G4double dE = step->GetTotalEnergyDeposit();
+        if (dE > 0) fEvt->AddPlasticEdep(dE / keV);
+      }
+
+      if (preVolL == fPlasticLog && postVolL != fPlasticLog) {
+        G4double KE = track->GetKineticEnergy();
+        if (KE > 0) {
+          G4ThreeVector dir = track->GetMomentumDirection();
+          fEvt->SetOutP1(KE / keV, dir.theta(), dir.phi());
+        }
+      }
+
+      if (fSilicaLog && postVolL == fSilicaLog && preVolL != fSilicaLog)
+        fEvt->SetHitSilica(1);
+
+      if (fSilicaLog && preVolL == fSilicaLog) {
+        auto status = track->GetTrackStatus();
+        if (status == fStopAndKill || status == fKillTrackAndSecondaries) {
+          fEvt->SetStopSilica(1);
+          if (run->GetMode() == 3)
+            fEvt->SetM3Stop(track->GetPosition());
+        }
+      }
+      return;  // e+に関してはここで終了
+    }
+
+    // 以下は trackID != 1 (Mode 3のNaI追跡)
+    if (run->GetMode() != 3) return;
+
+    if (!fNaILog) {
+      fNaILog = fDet->GetNaILogic();
+      if (!fNaILog)
+        fNaILog = G4LogicalVolumeStore::GetInstance()->GetVolume("naiL");
+    }
+    if (!fNaILog) return;
+
+    if (preVolL == fNaILog) {
+      G4double dE = step->GetTotalEnergyDeposit();
+      if (dE > 0) fEvt->AddNaiEdepM3(dE / keV);
+    }
+    if (postVolL == fNaILog && preVolL != fNaILog)
+      fEvt->SetHitNaiM3(1);
+
+    return;
   }
+
+  // ---- Mode 2: NaI simulation ----
+  auto edep = step->GetTotalEnergyDeposit();
+  if (edep > 0) fEvt->AddEdep(edep / keV);
 
   if (!fNaILog) {
     fNaILog = fDet->GetNaILogic();
-    if (!fNaILog) {
+    if (!fNaILog)
       fNaILog = G4LogicalVolumeStore::GetInstance()->GetVolume("naiL");
-    }
     if (!fNaILog) return;
   }
 
-  // --- NaI 内の γ の相互作用で分類 ---
   auto* track = step->GetTrack();
   auto* pre   = step->GetPreStepPoint();
   auto* vol   = pre->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
 
-  // World→NaI に入った瞬間を検出->add to truth
   auto preTouch  = pre->GetTouchableHandle();
-  auto postTouch = step->GetPostStepPoint()->GetTouchableHandle();  
-  auto preVol  = preTouch ? preTouch->GetVolume() : nullptr;
-  auto postVol = postTouch ? postTouch->GetVolume() : nullptr;
-  auto preVolL  = preVol ? preVol->GetLogicalVolume() : nullptr;
-  auto postVolL = postVol ? postVol->GetLogicalVolume() : nullptr;  
+  auto postTouch = step->GetPostStepPoint()->GetTouchableHandle();
+  auto preVol    = preTouch  ? preTouch->GetVolume()  : nullptr;
+  auto postVol   = postTouch ? postTouch->GetVolume() : nullptr;
+  auto preVolL   = preVol  ? preVol->GetLogicalVolume()  : nullptr;
+  auto postVolL  = postVol ? postVol->GetLogicalVolume() : nullptr;
+
   if (postVolL == fNaILog && preVolL != fNaILog) {
-    G4double eGamma = track->GetKineticEnergy()/keV;
-    fEvt->AddTruthE(eGamma);
+    fEvt->AddTruthE(track->GetKineticEnergy() / keV);
   }
-  
-  // ★ NaI 内でのエネルギー deposit をプロセス別に分類
+
   if (vol == fNaILog) {
     G4double dE_keV = step->GetTotalEnergyDeposit() / keV;
     if (dE_keV > 0.0) {
       auto proc = step->GetPostStepPoint()->GetProcessDefinedStep();
       if (proc) {
-	auto name = proc->GetProcessName();
-	if (name == "phot") {
-	  fEvt->AddPhotoEdep(dE_keV);
-	} else if (name == "compt") {
-	  fEvt->AddComptEdep(dE_keV);
-	}
+        auto name = proc->GetProcessName();
+        if (name == "phot")  fEvt->AddPhotoEdep(dE_keV);
+        else if (name == "compt") fEvt->AddComptEdep(dE_keV);
       }
     }
   }
 
-  // NaI突入を検出
   if (postVolL == fNaILog && preVolL != fNaILog) {
-    // このγが何番目かを識別するために parentID を使う
-    //int id = track->GetParentID(); // 0ならprimary, >0はsecondary
-
-    // gammaを発射した順番を PrimaryGeneratorAction で track->SetUserInformation に書くか、
-    // あるいは直接 trackID %3 でタグ付けするなど工夫が必要
-    // ここでは簡略化して「track->GetTrackID() % 3」で識別
-    int which = (track->GetTrackID()-1) % 3; // 0,1,2 に対応
-
-    auto run = static_cast<const RunAction*>(G4RunManager::GetRunManager()->GetUserRunAction());
-    auto man = G4AnalysisManager::Instance();
-
-    // 今の値を読み出してビットを立てる
-    auto evt = static_cast<EventAction*>(G4EventManager::GetEventManager()->GetUserEventAction());
-    if (evt) {
-      evt->AddHitNaI(1 << which);
-    }
-
+    int which = (track->GetTrackID()-1) % 3;
+    fEvt->AddHitNaI(1 << which);
   }
-
-
 }
 

@@ -3,8 +3,11 @@
 #include <G4VUserActionInitialization.hh>
 class ActionInitialization : public G4VUserActionInitialization {
  public:
-  ActionInitialization() = default;
+  explicit ActionInitialization(int mode = 2) : fMode(mode) {}
   void Build() const override;
   void BuildForMaster() const override;
+  int GetMode() const { return fMode; }
+ private:
+  int fMode;
 };
 #endif

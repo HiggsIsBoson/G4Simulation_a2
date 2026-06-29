@@ -22,7 +22,9 @@ int main(int argc, char** argv) {
   std::string p2_value;
   std::string out_name;
   std::string macro_file;
+  G4double silicaZ_mm = 50.;  // Mode 1/3: silica center z [mm]
   bool useUI = false;
+  int simMode = 2;
 
   for (int i=1; i<argc; ++i) {
     std::string arg = argv[i];
@@ -30,6 +32,10 @@ int main(int argc, char** argv) {
       p2_value = argv[++i];
     } else if (arg == "--out" && i+1 < argc) {
       out_name = argv[++i];
+    } else if (arg == "--mode" && i+1 < argc) {
+      simMode = std::stoi(argv[++i]);
+    } else if (arg == "--silica-z" && i+1 < argc) {
+      silicaZ_mm = std::stod(argv[++i]);
     } else if (arg == "-ui" || arg == "--ui") {
       useUI = true;
     } else if (arg[0] != '-') {
@@ -39,27 +45,25 @@ int main(int argc, char** argv) {
 
   auto* runManager = new G4RunManager();
 
-  runManager->SetUserInitialization(new DetectorConstruction()); 
-  runManager->SetUserInitialization(new FTFP_BERT());            // Physics model for hadronic interaction
-  runManager->SetUserInitialization(new ActionInitialization()); 
+  runManager->SetUserInitialization(new DetectorConstruction(simMode, silicaZ_mm));
+  runManager->SetUserInitialization(new FTFP_BERT());
+  runManager->SetUserInitialization(new ActionInitialization(simMode));
 
   auto* UIman = G4UImanager::GetUIpointer();
 
-  // --- apply pre-run commands ---
-
-
-  if (!p2_value.empty()){
-    UIman->ApplyCommand("/source/p2 " + p2_value);
-  }
-  else if(!useUI){
-    std::cout << "Specify the p2 parameter from the command line. Abort." << std::endl;
-    return 1;
+  if (simMode == 2) {
+    if (!p2_value.empty()){
+      UIman->ApplyCommand("/source/p2 " + p2_value);
+    } else if (!useUI) {
+      std::cout << "Mode 2: Specify --p2 from the command line. Abort." << std::endl;
+      return 1;
+    }
   }
 
   if (!out_name.empty()){
     UIman->ApplyCommand("/analysis/out " + out_name);
   }
-  else if(!useUI){
+  else if(!useUI && (simMode == 2 || simMode == 3)){
     std::cout << "Specify the output file from the command line. Abort." << std::endl;
     return 1;
   }

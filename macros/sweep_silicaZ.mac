@@ -1,0 +1,6 @@
+# このマクロは sweep_silicaZ.sh から1点ずつ呼ばれる想定
+# シェルスクリプト側で --silica-z と --out を指定する
+/control/verbose 0
+/run/verbose 0
+/run/initialize
+/run/beamOn 50000

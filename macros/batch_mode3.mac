@@ -1,0 +1,13 @@
+/control/verbose 1
+/run/verbose 1
+
+# NaI energy resolution: sigma(E) = sqrt(a^2*E + b^2*E^2 + c^2)  [E in keV]
+# a=0.52 (sqrt(keV)), b=0, c=0 for ideal sqrt(E) resolution
+/analysis/a 0.52
+/analysis/b 0.0
+/analysis/c 0.0
+
+/run/initialize
+
+# 100k events: Na22 beta+ → plastic → silica(Ps) → NaI
+/run/beamOn 100000

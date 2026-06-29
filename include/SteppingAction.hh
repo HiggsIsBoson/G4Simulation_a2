@@ -10,8 +10,10 @@ class SteppingAction : public G4UserSteppingAction {
   SteppingAction(const DetectorConstruction* det, EventAction* evt);
   void UserSteppingAction(const G4Step*) override;
  private:
-  const DetectorConstruction* fDet{};   // ← DetectorConstruction を保持
-  G4LogicalVolume* fNaILog{};           // ← 最初は nullptr、あとで遅延取得
+  const DetectorConstruction* fDet{};
+  G4LogicalVolume* fNaILog{};
+  G4LogicalVolume* fPlasticLog{};
+  G4LogicalVolume* fSilicaLog{};
   EventAction* fEvt{};
 };
 
