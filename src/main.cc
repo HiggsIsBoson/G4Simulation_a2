@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
 
   auto* UIman = G4UImanager::GetUIpointer();
 
-  if (simMode == 2) {
+  if (simMode == 2 || simMode == 3) {
     if (!p2_value.empty()){
       UIman->ApplyCommand("/source/p2 " + p2_value);
     } else if (!useUI) {
-      std::cout << "Mode 2: Specify --p2 from the command line. Abort." << std::endl;
+      std::cout << "Mode " << simMode << ": Specify --p2 from the command line. Abort." << std::endl;
       return 1;
     }
   }

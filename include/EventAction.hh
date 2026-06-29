@@ -3,6 +3,7 @@
 #include <G4UserEventAction.hh>
 #include <G4ThreeVector.hh>
 #include <globals.hh>
+#include <set>
 #include "PsEventInfo.hh"
 
 class RunAction;
@@ -42,8 +43,13 @@ class EventAction : public G4UserEventAction {
   G4ThreeVector GetM3StopPos() const { return fM3StopPos; }
   void SetM3NGamma(int n) { fM3NGamma = n; }
   void AddNaiEdepM3(G4double dE_keV) { fM3NaiEdep += dE_keV; }
+  void AddNaiEdepPs(G4double dE_keV) { fM3NaiEdepPs += dE_keV; }
   void SetHitNaiM3(int v) { fM3HitNai |= v; }
   G4double GetM3NaiEdep() const { return fM3NaiEdep; }
+
+  // Ps由来trackID管理（子孫へのタグ伝搬用）
+  void  AddPsTrackID(G4int id)         { fPsTrackIDs.insert(id); }
+  bool  IsPsTrack(G4int parentID) const { return fPsTrackIDs.count(parentID) > 0; }
 
  private:
   RunAction* fRun{};
@@ -70,10 +76,12 @@ class EventAction : public G4UserEventAction {
   G4double fP1OutPhi{0};
 
   // Mode 3 fields
-  bool         fM3KillAnnihil{false};  // StackingActionが読む
-  G4ThreeVector fM3StopPos{};           // TrackingActionが読む
-  int           fM3NGamma{0};           // 2 or 3
+  bool          fM3KillAnnihil{false};
+  G4ThreeVector fM3StopPos{};
+  int           fM3NGamma{0};
   G4double      fM3NaiEdep{0};
+  G4double      fM3NaiEdepPs{0};   // Ps由来のみのNaI edep
   int           fM3HitNai{0};
+  std::set<G4int> fPsTrackIDs{};   // Ps由来trackIDの集合（子孫へのタグ伝搬用）
 };
 #endif

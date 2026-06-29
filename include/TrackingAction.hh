@@ -10,6 +10,7 @@ class PrimaryGeneratorAction;
 class TrackingAction : public G4UserTrackingAction {
  public:
   TrackingAction(int mode, EventAction* evt, const PrimaryGeneratorAction* pga);
+  void PreUserTrackingAction(const G4Track* track) override;
   void PostUserTrackingAction(const G4Track* track) override;
 
  private:

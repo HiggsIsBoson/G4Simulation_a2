@@ -33,7 +33,9 @@ void EventAction::BeginOfEventAction(const G4Event* evt) {
   fM3StopPos     = G4ThreeVector(0,0,0);
   fM3NGamma      = 0;
   fM3NaiEdep     = 0.0;
+  fM3NaiEdepPs   = 0.0;
   fM3HitNai      = 0;
+  fPsTrackIDs.clear();
 
   if (!evt->GetUserInformation()) {
     auto* info = new PsEventInfo();
@@ -79,11 +81,15 @@ void EventAction::EndOfEventAction(const G4Event* evt) {
     man->FillNtupleIColumn(run->GetNtM3NGamma(),     fM3NGamma);
     man->FillNtupleDColumn(run->GetNtM3NaiEdep(),    fM3NaiEdep);
     {
-      G4double E = fM3NaiEdep;
-      G4double sigma = std::sqrt(fRun->GetA()*fRun->GetA()*E +
-                                 fRun->GetB()*fRun->GetB()*E*E +
-                                 fRun->GetC()*fRun->GetC());
-      man->FillNtupleDColumn(run->GetNtM3NaiEdepSm(), G4RandGauss::shoot(E, sigma));
+      auto smear = [&](G4double E) {
+        G4double sigma = std::sqrt(fRun->GetA()*fRun->GetA()*E +
+                                   fRun->GetB()*fRun->GetB()*E*E +
+                                   fRun->GetC()*fRun->GetC());
+        return G4RandGauss::shoot(E, sigma);
+      };
+      man->FillNtupleDColumn(run->GetNtM3NaiEdepSm(),   smear(fM3NaiEdep));
+      man->FillNtupleDColumn(run->GetNtM3NaiEdepPs(),   fM3NaiEdepPs);
+      man->FillNtupleDColumn(run->GetNtM3NaiEdepPsSm(), smear(fM3NaiEdepPs));
     }
     man->FillNtupleIColumn(run->GetNtM3HitNai(),     fM3HitNai);
     man->AddNtupleRow();

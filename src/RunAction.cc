@@ -46,8 +46,10 @@ void RunAction::Book(){
     fNtM3StopSilica  = man->CreateNtupleIColumn("stop_silica");  // 1 if e+ stopped in silica (Ps formed)
     fNtM3NGamma      = man->CreateNtupleIColumn("n_gamma");      // 2 or 3 (valid if stop_silica==1)
     fNtM3NaiEdep     = man->CreateNtupleDColumn("nai_edep");      // NaI total energy deposit [keV]
-    fNtM3NaiEdepSm   = man->CreateNtupleDColumn("nai_edep_sm");  // NaI edep with detector smearing [keV]
-    fNtM3HitNai      = man->CreateNtupleIColumn("hit_nai");       // 1 if any gamma hit NaI
+    fNtM3NaiEdepSm   = man->CreateNtupleDColumn("nai_edep_sm");    // NaI edep with detector smearing [keV]
+    fNtM3NaiEdepPs   = man->CreateNtupleDColumn("nai_edep_ps");   // Ps由来のNaI edep (raw) [keV]
+    fNtM3NaiEdepPsSm = man->CreateNtupleDColumn("nai_edep_ps_sm");// Ps由来のNaI edep (smeared) [keV]
+    fNtM3HitNai      = man->CreateNtupleIColumn("hit_nai");        // 1 if any gamma hit NaI
     man->FinishNtuple();
   } else {
     // Mode 2: NaI energy deposit

@@ -14,6 +14,7 @@
 #include <G4Gamma.hh>
 #include <G4Positron.hh>
 #include <G4EventManager.hh>
+#include "PsTrackInfo.hh"
 
 SteppingAction::SteppingAction(const DetectorConstruction* det, EventAction* evt)
 : fDet(det), fNaILog(nullptr), fPlasticLog(nullptr), fEvt(evt) {}
@@ -92,7 +93,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 
     if (preVolL == fNaILog) {
       G4double dE = step->GetTotalEnergyDeposit();
-      if (dE > 0) fEvt->AddNaiEdepM3(dE / keV);
+      if (dE > 0) {
+        fEvt->AddNaiEdepM3(dE / keV);
+        // Ps由来か判定: TrackingAction::PreUserTrackingAction が子孫にも伝搬済み
+        if (track->GetUserInformation() &&
+            dynamic_cast<PsTrackInfo*>(track->GetUserInformation()))
+          fEvt->AddNaiEdepPs(dE / keV);
+      }
     }
     if (postVolL == fNaILog && preVolL != fNaILog)
       fEvt->SetHitNaiM3(1);

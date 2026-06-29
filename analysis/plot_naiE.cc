@@ -1,26 +1,26 @@
-void plot_naiE()
+void plot_naiE(int mode)
 {
     // ------------------------------
     // 1. 入力ファイルを開く
-    // ------------------------------
-    TFile *f0 = TFile::Open("nai_p2_000.root");
-    TFile *f1 = TFile::Open("nai_p2_100.root");
-
-    if (!f0 || !f1) {
-        std::cerr << "Error: cannot open files" << std::endl;
-        return;
-    }
-
-    // ------------------------------
     // 2. TTree "nai" を取得
     // ------------------------------
-    TTree *t0 = (TTree*)f0->Get("nai");
-    TTree *t1 = (TTree*)f1->Get("nai");
-
-    if (!t0 || !t1) {
-        std::cerr << "Error: TTree 'nai' not found" << std::endl;
-        return;
-    }
+  
+  TTree *t1=0, *t0=0;
+  if(mode==2){
+    TFile *f0  = new TFile("mode2_nai_p2_000.root","read");
+    TFile *f1  = new TFile("mode2_nai_p2_100.root","read");
+    t0 = (TTree*)f0->Get("nai");
+    t1 = (TTree*)f1->Get("nai");
+  }
+  else{
+    TFile *f0  = new TFile("mode3_fullChain_p2_000.root","read");
+    TFile *f1  = new TFile("mode3_fullChain_p2_100.root","read");
+    t0 = (TTree*)f0->Get("chain");
+    t1 = (TTree*)f1->Get("chain");
+    t0->SetAlias("smE","nai_edep_sm");
+    t1->SetAlias("smE","nai_edep_sm");
+  }
+  
 
     // ------------------------------
     // 3. Histogram 作成
@@ -57,6 +57,9 @@ void plot_naiE()
 
     h1->Draw("HIST");
     h0->Draw("HIST SAME");
+
+    cout << h0->Integral() << " " << h0->GetMaximum() << " " << endl;
+    cout << h1->Integral() << " " << h1->GetMaximum() << " " << endl;
 
     // ------------------------------
     // 5. Legend

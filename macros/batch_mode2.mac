@@ -8,4 +8,4 @@
 /analysis/c 0.0
 
 # Beam
-/run/beamOn 1000
+/run/beamOn 100000

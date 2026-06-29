@@ -75,6 +75,8 @@ class RunAction : public G4UserRunAction {
   G4int GetNtM3NGamma()      const { return fNtM3NGamma; }
   G4int GetNtM3NaiEdep()     const { return fNtM3NaiEdep; }
   G4int GetNtM3NaiEdepSm()   const { return fNtM3NaiEdepSm; }
+  G4int GetNtM3NaiEdepPs()   const { return fNtM3NaiEdepPs; }
+  G4int GetNtM3NaiEdepPsSm() const { return fNtM3NaiEdepPsSm; }
   G4int GetNtM3HitNai()      const { return fNtM3HitNai; }
 
   void AccumP1(G4double edep, G4bool transmitted) {
@@ -110,6 +112,8 @@ class RunAction : public G4UserRunAction {
   G4int fNtM3NGamma{-1};
   G4int fNtM3NaiEdep{-1};
   G4int fNtM3NaiEdepSm{-1};
+  G4int fNtM3NaiEdepPs{-1};
+  G4int fNtM3NaiEdepPsSm{-1};
   G4int fNtM3HitNai{-1};
 
   // Mode 3 counters

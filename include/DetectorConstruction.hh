@@ -39,7 +39,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 
   // Mode 1 parameters (all in Geant4 units = mm)
   G4double fPlasticHL;     // half-thickness of plastic (0.15 mm)
-  G4double fPlasticR;      // radius of plastic disk (15 mm)
+  G4double fPlasticHLXY;   // half-side of square plastic (5 mm → 10mm角)
   G4double fNa22Z;         // z of Na22 source (0 mm)
   G4double fPlasticZ;      // z of plastic center (10 mm)
   G4double fSilicaHLBox;   // half-side of silica cube (10 mm → 2cm cube)

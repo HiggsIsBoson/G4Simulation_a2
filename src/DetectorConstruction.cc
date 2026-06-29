@@ -15,7 +15,7 @@ DetectorConstruction::DetectorConstruction(int mode, G4double silicaZ_mm)
   fNaISX(2.5*cm), fNaISY(2.5*cm), fNaISZ(10.*cm),
   fGap(1.*mm),
   fMode(mode),
-  fPlasticHL(0.15*mm), fPlasticR(15.*mm),
+  fPlasticHL(0.15*mm), fPlasticHLXY(5.*mm),  // 10mm角の正方形プラシン
   fNa22Z(0.*mm),
   fPlasticZ(10.*mm),
   fSilicaHLBox(10.*mm), fSilicaZ(silicaZ_mm*mm) {}
@@ -49,12 +49,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
   if (fMode == 1) {
     // Mode 1:
-    //   Na22 source  at z = 0  mm  (point, +z direction)
-    //   Plastic disk at z = 10 mm  (0.3 mm thick, r=15 mm)
-    //   Silica box   at z = 50 mm  (2x2x2 cm cube, 3 cm gap after plastic back face)
+    //   Na22 source    at z = 0  mm  (point, +z direction)
+    //   Plastic square at z = 10 mm  (0.3 mm thick, 10mm角)
+    //   Silica box     at z = 50 mm  (2x2x2 cm cube)
 
-    // Plastic disk
-    auto plasticS = new G4Tubs("plasticS", 0., fPlasticR, fPlasticHL, 0., 360*deg);
+    // Plastic square (10mm × 10mm × 0.3mm)
+    auto plasticS = new G4Box("plasticS", fPlasticHLXY, fPlasticHLXY, fPlasticHL);
     fPlasticLogic = new G4LogicalVolume(plasticS, fMatPlastic, "plasticL");
     auto plasticVis = new G4VisAttributes(G4Colour(0.0, 1.0, 0.0));
     plasticVis->SetForceSolid(true);
@@ -71,16 +71,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     new G4PVPlacement(nullptr, G4ThreeVector(0, 0, fSilicaZ),
                       fSilicaLogic, "silicaP", worldL, false, 0);
 
-    G4cout << "Mode 1: Na22 source at z=" << fNa22Z/mm << " mm, pointing +z" << G4endl;
-    G4cout << "Mode 1: plastic disk   at z=" << fPlasticZ/mm
-           << " mm, thickness=" << 2*fPlasticHL/mm << " mm, R=" << fPlasticR/mm << " mm" << G4endl;
-    G4cout << "Mode 1: silica box     at z=" << fSilicaZ/mm
+    G4cout << "Mode 1: Na22 source  at z=" << fNa22Z/mm << " mm, pointing +z" << G4endl;
+    G4cout << "Mode 1: plastic      at z=" << fPlasticZ/mm
+           << " mm, " << 2*fPlasticHLXY/mm << "x" << 2*fPlasticHLXY/mm
+           << "x" << 2*fPlasticHL/mm << " mm" << G4endl;
+    G4cout << "Mode 1: silica box   at z=" << fSilicaZ/mm
            << " mm, side=" << 2*fSilicaHLBox/mm << " mm" << G4endl;
 
   } else if (fMode == 3) {
     // Mode 3: full chain  Na22 → plastic → silica(Ps) → NaI
-    // plastic
-    auto plasticS = new G4Tubs("plasticS", 0., fPlasticR, fPlasticHL, 0., 360*deg);
+    // Plastic square (10mm × 10mm × 0.3mm)
+    auto plasticS = new G4Box("plasticS", fPlasticHLXY, fPlasticHLXY, fPlasticHL);
     fPlasticLogic = new G4LogicalVolume(plasticS, fMatPlastic, "plasticL");
     auto plasticVis = new G4VisAttributes(G4Colour(0.0, 1.0, 0.0));
     plasticVis->SetForceSolid(true);
@@ -88,7 +89,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     new G4PVPlacement(nullptr, G4ThreeVector(0, 0, fPlasticZ),
                       fPlasticLogic, "plasticP", worldL, false, 0);
 
-    // silica box
+    // Silica box 20x20x20 mm
     auto silicaS3 = new G4Box("silicaS", fSilicaHLBox, fSilicaHLBox, fSilicaHLBox);
     fSilicaLogic = new G4LogicalVolume(silicaS3, fMatSiO2, "silicaL");
     auto silicaVis3 = new G4VisAttributes(G4Colour(1.0, 1.0, 0.0));
@@ -97,22 +98,37 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     new G4PVPlacement(nullptr, G4ThreeVector(0, 0, fSilicaZ),
                       fSilicaLogic, "silicaP", worldL, false, 0);
 
-    // NaI (+x side of silica)
-    auto naiS3 = new G4Box("naiS", fNaISX, fNaISY, fNaISZ);
+    // NaI配置:
+    //   z方向: シリカ背面(z=fSilicaZ+fSilicaHLBox)から30mm後ろにNaI正面
+    //   y方向: シリカ上面(y=+fSilicaHLBox)から30mm上にNaI底面（beta+が通り抜けても当たらない）
+    //   長軸: y方向
+    G4double silicaBackZ = fSilicaZ + fSilicaHLBox;   // シリカ背面 z
+    G4double silicaTopY  = fSilicaHLBox;               // シリカ上面 y
+    G4double naiHLx      = fNaISZ;                     // NaI x方向の半長 = 100mm (長軸)
+    G4double naiHLy      = fNaISX;                     // NaI y方向の半厚 = 25mm
+    G4double naiHLz      = fNaISY;                     // NaI z方向の半厚 = 25mm
+    G4double naiCenterZ  = silicaBackZ + 30.*mm + naiHLz;
+    G4double naiCenterY  = silicaTopY  + 30.*mm + naiHLy;  // 底面がシリカ上面から3cm上
+
+    // G4Box(halfX, halfY, halfZ): X=100mm(長軸), Y=25mm, Z=25mm
+    auto naiS3 = new G4Box("naiS", naiHLx, naiHLy, naiHLz);
     fNaILogic = new G4LogicalVolume(naiS3, fMatNaI, "naiL");
     auto naiVis3 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0));
     naiVis3->SetForceSolid(true);
     fNaILogic->SetVisAttributes(naiVis3);
-    G4double xNaI = fSilicaHLBox + fGap + fNaISX;
-    new G4PVPlacement(nullptr, G4ThreeVector(xNaI, 0, fSilicaZ),
+    new G4PVPlacement(nullptr, G4ThreeVector(0, naiCenterY, naiCenterZ),
                       fNaILogic, "naiP", worldL, false, 0);
 
     G4cout << "Mode 3: plastic    at z=" << fPlasticZ/mm
-           << " mm, thickness=" << 2*fPlasticHL/mm << " mm" << G4endl;
+           << " mm, " << 2*fPlasticHLXY/mm << "x" << 2*fPlasticHLXY/mm
+           << "x" << 2*fPlasticHL/mm << " mm" << G4endl;
     G4cout << "Mode 3: silica     at z=" << fSilicaZ/mm
            << " mm, side=" << 2*fSilicaHLBox/mm << " mm" << G4endl;
-    G4cout << "Mode 3: NaI        at x=" << xNaI/mm
-           << " mm, z=" << fSilicaZ/mm << " mm" << G4endl;
+    G4cout << "Mode 3: NaI        center=(0, " << naiCenterY/mm << ", " << naiCenterZ/mm << ") mm"
+           << ", long-axis=x (" << 2*naiHLx/mm << "mm), size="
+           << 2*naiHLx/mm << "x" << 2*naiHLy/mm << "x" << 2*naiHLz/mm << " mm"
+           << ", bottom-y=" << (naiCenterY-naiHLy)/mm
+           << " mm (+" << (naiCenterY-naiHLy-silicaTopY)/mm << " mm from silica top)" << G4endl;
 
   } else {
     // Mode 2 (default): silica + NaI for Ps lifetime study

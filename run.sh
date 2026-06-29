@@ -6,10 +6,10 @@ cd build
 # =====================================================================
 
 # バッチ実行 (--out にはフルパスか .root 拡張子つきで指定)
-#./nai_spectrum --mode 1 --out ../analysis/plastic_sim.root ../macros/batch_mode1.mac
+#./nai_spectrum --mode 1 --out ../analysis/mode1_plastic_sim.root ../macros/batch_mode1.mac
 
 # シリカ位置を変えてgap=5mmに設定 (silicaZ = plasticz_back + gap + silicaHalf = 10.15 + 5 + 10 = 25.15mm)
-#./nai_spectrum --mode 1 --silica-z 25 --out ../analysis/plastic_sim_gap5.root ../macros/batch_mode1.mac
+#./nai_spectrum --mode 1 --silica-z 25 --out ../analysis/mode1_plastic_sim_gap5.root ../macros/batch_mode1.mac
 
 
 # =====================================================================
@@ -17,13 +17,13 @@ cd build
 # =====================================================================
 
 # 2γのみ (p2=1.0): 511keV back-to-back
-#./nai_spectrum --mode 2 --p2 1.0 --out ../analysis/nai_p2_100.root ../macros/batch_mode2.mac
+#./nai_spectrum --mode 2 --p2 1.0 --out ../analysis/mode2_nai_p2_100.root ../macros/batch_mode2.mac
 
 # 3γのみ (p2=0.0): Ore-Powell分布
-#./nai_spectrum --mode 2 --p2 0.0 --out ../analysis/nai_p2_000.root ../macros/batch_mode2.mac
+#./nai_spectrum --mode 2 --p2 0.0 --out ../analysis/mode2_nai_p2_000.root ../macros/batch_mode2.mac
 
 # 50/50混合 (p2=0.5)
-#./nai_spectrum --mode 2 --p2 0.5 --out ../analysis/nai_p2_050.root ../macros/batch_mode2.mac
+#./nai_spectrum --mode 2 --p2 0.5 --out ../analysis/mode2_nai_p2_050.root ../macros/batch_mode2.mac
 
 
 # =====================================================================
@@ -32,8 +32,8 @@ cd build
 #          ntuple "chain": gen_E, plastic_edep, hit_silica, stop_silica, n_gamma, nai_edep, hit_nai
 # =====================================================================
 
-# 50/50混合 (p2=0.5: p-Ps/o-Ps比の目安として使用)
-./nai_spectrum --mode 3 --p2 0.5 --out ../analysis/full_chain.root ../macros/batch_mode3.mac
+./nai_spectrum --mode 3 --p2 0.0 --out ../analysis/mode3_p2_000.root ../macros/batch_mode3.mac
+./nai_spectrum --mode 3 --p2 1.0 --out ../analysis/mode3_p2_100.root ../macros/batch_mode3.mac
 
 # シリカ位置を変える場合 (例: gap=5mm)
 #./nai_spectrum --mode 3 --p2 0.5 --silica-z 25 --out ../analysis/full_chain_gap5.root ../macros/batch_mode3.mac
