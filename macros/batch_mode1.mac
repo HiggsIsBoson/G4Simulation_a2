@@ -1,0 +1,7 @@
+/control/verbose 1
+/run/verbose 1
+
+/run/initialize
+
+# Run 100k events (Na22 beta+ isotropic from z=-2cm, plastic at z=0)
+/run/beamOn 100000

@@ -1,28 +1,52 @@
 #include "PrimaryGeneratorAction.hh"
-#include "RunAction.hh"
 #include "EventAction.hh"
+#include "RunAction.hh"
 #include <G4ParticleDefinition.hh>
 #include <G4ParticleGun.hh>
 #include <G4Gamma.hh>
+#include <G4Positron.hh>
 #include <G4SystemOfUnits.hh>
 #include <G4RandomDirection.hh>
 #include <Randomize.hh>
 #include <G4GenericMessenger.hh>
-#include <G4SystemOfUnits.hh>
 #include <G4RunManager.hh>
 #include <G4AnalysisManager.hh>
+#include "PsEventInfo.hh"
+#include <CLHEP/Units/PhysicalConstants.h>
 
-#include <algorithm>  
+#include <algorithm>
+#include <cmath>
 
-PrimaryGeneratorAction::PrimaryGeneratorAction() : fP2(0.5) {
+PrimaryGeneratorAction::PrimaryGeneratorAction(int mode)
+: fMode(mode), fP2(0.5) {
   fGun = new G4ParticleGun(1);
   fGamma = G4Gamma::GammaDefinition();
-  fGun->SetParticleDefinition(fGamma);
+  fPositron = G4Positron::PositronDefinition();
+  if (fMode == 2) fGun->SetParticleDefinition(fGamma);
   fMsg = new G4GenericMessenger(this, "/source/", "Primary source controls");
   fMsg->DeclareProperty("p2", fP2, "Probability for 2γ (vs 3γ) after o-Ps/pickoff").SetParameterName("p2", false);
 }
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction(){ delete fGun; delete fMsg; }
+
+G4double PrimaryGeneratorAction::SampleNa22BetaEnergy() const {
+  // Na22 beta+ endpoint: 545.4 keV (to 1274.5 keV excited state of Ne22)
+  // Spectrum shape: N(T) ∝ p * (T+me) * (Q-T)^2  (no Fermi correction)
+  // where p = sqrt((T+me)^2 - me^2), me = 511 keV, Q = 545.4 keV
+  constexpr G4double Q  = 545.4;   // keV
+  constexpr G4double me = 511.0;   // keV
+  constexpr G4double WMAX = 5.0e10; // conservative upper bound (keV^(5/2) units)
+
+  for (int i = 0; i < 100000; ++i) {
+    G4double T = Q * G4UniformRand();
+    G4double E = T + me;
+    G4double p2 = E*E - me*me;
+    if (p2 <= 0) continue;
+    G4double w = std::sqrt(p2) * E * (Q - T) * (Q - T);
+    if (G4UniformRand() * WMAX < w) return T * keV;
+  }
+  return 0.3 * Q * keV; // fallback
+}
 
 G4ThreeVector PrimaryGeneratorAction::RandomPointInSilica() const {
   // Cylinder r<=3cm, |z|<=5cm (DetectorConstruction hardcodes these)
@@ -34,6 +58,36 @@ G4ThreeVector PrimaryGeneratorAction::RandomPointInSilica() const {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
+
+  if (fMode == 1 || fMode == 3) {
+    // Mode 1/3: Na22 beta+ in +z direction from z=0
+    G4ThreeVector pos(0, 0, fNa22Z);
+
+    // e+ primary
+    fGun->SetParticleDefinition(fPositron);
+    G4double KE = SampleNa22BetaEnergy();
+    fGun->SetParticleEnergy(KE);
+    fGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
+    fGun->SetParticlePosition(pos);
+    fGun->GeneratePrimaryVertex(evt);
+
+    if (fMode == 3) {
+      // 1274.5 keV de-excitation gamma (Na22→Ne22*→Ne22+γ)
+      fGun->SetParticleDefinition(fGamma);
+      fGun->SetParticleEnergy(1274.5*keV);
+      fGun->SetParticleMomentumDirection(G4RandomDirection());
+      fGun->SetParticlePosition(pos);
+      fGun->GeneratePrimaryVertex(evt);
+    }
+
+    // gen energyをPsEventInfo経由で保存（MTクローン問題を回避）
+    auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation());
+    if (!info) { info = new PsEventInfo(); evt->SetUserInformation(info); }
+    info->SetGenBeta(KE/keV, 0., 0.);
+    return;
+  }
+
+  // Mode 2 below
   auto shoot = [&](G4double E, const G4ThreeVector& dir, const G4ThreeVector &pos){
     fGun->SetParticleEnergy(E);
     fGun->SetParticleMomentumDirection(dir);
@@ -160,9 +214,46 @@ std::vector<G4double> PrimaryGeneratorAction::Generate3Gamma_OrePowell(G4Event* 
 }
 
 // ===== RAMBO風：3 質量ゼロ粒子（γ）を Ecm で等方・等体積サンプル =====
+void PrimaryGeneratorAction::Rambo3Static(const G4double Ecm,
+                                          std::array<G4ThreeVector,3>& pdir,
+                                          std::array<G4double,3>& E)
+{
+  Rambo3Impl(Ecm, pdir, E);
+}
+
+// OrePowell分布に従う3γ方向・エネルギーをサンプル（返値: 成功=true）
+bool PrimaryGeneratorAction::SampleOrePowell3(std::array<G4ThreeVector,3>& dirs,
+                                               std::array<G4double,3>& energies)
+{
+  constexpr G4double Ecm = 2.0 * 511.0 * keV;
+  constexpr G4double WMAX = 400.;
+  constexpr int MAX_TRY = 10000;
+  for (int itry=0; itry<MAX_TRY; ++itry) {
+    Rambo3Impl(Ecm, dirs, energies);
+    G4double x1=(energies[0]/keV)/511., x2=(energies[1]/keV)/511., x3=(energies[2]/keV)/511.;
+    if (x1<=0||x1>=0.99||x2<=0||x2>=0.99||x3<=0||x3>=0.99) continue;
+    G4double den=(1-x1)*(1-x2)*(1-x3);
+    if (den<=0) continue;
+    G4double num=x1*x1*(1-x1)*(1-x1)+x2*x2*(1-x2)*(1-x2)+x3*x3*(1-x3)*(1-x3);
+    auto c12=dirs[0].dot(dirs[1]), c23=dirs[1].dot(dirs[2]), c31=dirs[2].dot(dirs[0]);
+    G4double w=(num/den)*(std::pow(1-c12,2)+std::pow(1-c23,2)+std::pow(1-c31,2));
+    if (G4UniformRand()*WMAX < w) return true;
+  }
+  // fallback: uniform
+  Rambo3Impl(Ecm, dirs, energies);
+  return false;
+}
+
 void PrimaryGeneratorAction::Rambo3(const G4double Ecm,
                                     std::array<G4ThreeVector,3>& pdir,
                                     std::array<G4double,3>& E)
+{
+  Rambo3Impl(Ecm, pdir, E);
+}
+
+void PrimaryGeneratorAction::Rambo3Impl(const G4double Ecm,
+                                        std::array<G4ThreeVector,3>& pdir,
+                                        std::array<G4double,3>& E)
 {
   // 1) まずランダム方向の単位ベクトル n_i を生成
   G4ThreeVector n[3];

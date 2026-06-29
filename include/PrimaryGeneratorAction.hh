@@ -9,27 +9,44 @@ class G4GenericMessenger;
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
  public:
-  PrimaryGeneratorAction();
+  explicit PrimaryGeneratorAction(int mode = 2);
   ~PrimaryGeneratorAction() override;
   void GeneratePrimaries(G4Event*) override;
 
-  // UI: set p2 (probability of 2γ vs 3γ)
   void SetP2(G4double v) { fP2 = std::clamp(v,0.0,1.0); }
+  G4double GetP2() const { return fP2; }
+
+  // 3γ generation (also used by TrackingAction in Mode 3)
+  static void Rambo3Static(G4double Ecm,
+                           std::array<G4ThreeVector,3>& pdir,
+                           std::array<G4double,3>& E);
+  static bool SampleOrePowell3(std::array<G4ThreeVector,3>& dirs,
+                                std::array<G4double,3>& energies);
 
  private:
-  G4ThreeVector RandomPointInSilica() const; // sample inside cylinder (r<=3cm, |z|<=5cm)
-  
+  // Mode 2
+  G4ThreeVector RandomPointInSilica() const;
   std::vector<G4double> Generate3Gamma_OrePowell(G4Event* evt);
-  
-  // RAMBO風 3 質量ゼロ粒子生成（合計エネルギー=Ecm）
   void Rambo3(const G4double Ecm,
               std::array<G4ThreeVector,3>& pdir,
               std::array<G4double,3>& E);
+  static void Rambo3Impl(G4double Ecm,
+                         std::array<G4ThreeVector,3>& pdir,
+                         std::array<G4double,3>& E);
 
+  // Mode 1: Na22 beta+ spectrum sampling (endpoint 545.4 keV, rejection sampling)
+  G4double SampleNa22BetaEnergy() const;
+
+  int fMode;
 
   G4ParticleGun* fGun{};
   G4ParticleDefinition* fGamma{nullptr};
-  G4double fP2; // default 0.5
-  G4GenericMessenger* fMsg{}; // /source/
+  G4ParticleDefinition* fPositron{nullptr};
+  G4double fP2;
+  G4GenericMessenger* fMsg{};
+
+  // Mode 1 geometry (must match DetectorConstruction)
+  G4double fNa22Z{-20.};    // Na22 source z position [mm], = -2 cm
+  G4double fPlasticZ{0.};   // plastic center z [mm]
 };
 #endif
