@@ -1,5 +1,10 @@
-## Anacondaで環境構築
+## Macの場合： Anacondaで環境構築
 もう済んでる場合はスキップしてOK.
+
+Windowsの場合、CondaからGeant4は配布されていないのでWSLを使うかネイティブにインストールする必要があります。
+2026前期はWSLを使いました。WSLの場合は [README_WSL.md](README_WSL.md) の手順を使ってください（condaは使いません）。
+WSLで計算自体は完璧にできますが、インタラクティブな描画や動作に影響するので、WSLすら使わずWindowsでネイティブにインストールするほうが使い始められたら便利に使えると思います。
+
 
 #### 1. Anacondaをインストール
 [ここ](https://www.anaconda.com/docs/getting-started/anaconda/install#macos-linux-installation:how-do-i-verify-my-installers-integrity)からダウンロード  
@@ -94,9 +99,9 @@ make -j 8
 
 セットアップは以下の通り:
 ```
-z=0 mm       z=10 mm              z=50 mm, x=40mm
+z=-20 mm     z=10 mm              z=50 mm
 Na22線源 →→  [プラシン 0.3mm厚]   [シリカゲル 20×20×20 mm]
-(+z方向)     (半径15mm円盤)        (中心)
+(+z方向)     (10×10mm角)          (中心)
 ```
 Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損失エネルギーと通過後のbeta+のエネルギー・方向を記録する。
 
@@ -106,14 +111,14 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 
 `build/`の中で
 ```
-./nai_spectrum --mode 2 --p2 1.0 --out ../analysis/nai_p2_100.root ../macros/batch_mode2.mac
+./nai_spectrum --mode 2 --p2 1.0 --out ../analysis/mode2_nai_p2_100.root ../macros/batch_mode2.mac
 ```
-を実行。無事に終了すれば`../analysis/nai_p2_100.root`というファイルが生成される。
+を実行。無事に終了すれば`../analysis/mode2_nai_p2_100.root`というファイルが生成される。
 ここで`--p2`は全イベントに占める2γイベントの割合を指定するオプションで, `1.0`は100% 2γという意味である。
 
 3γだけを作りたい場合は :
 ```
-./nai_spectrum --mode 2 --p2 0.0 --out ../analysis/nai_p2_000.root ../macros/batch_mode2.mac
+./nai_spectrum --mode 2 --p2 0.0 --out ../analysis/mode2_nai_p2_000.root ../macros/batch_mode2.mac
 ```
 とすればよい。
 
@@ -129,7 +134,7 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 
 セットアップは以下の通り:
 ```
-z=0 mm      z=10 mm              z=50 mm, x=40mm                   z=115 mm
+z=-20 mm    z=10 mm              z=50 mm                           z=115 mm
 Na22線源 →→ [プラシン 0.3mm厚]   [シリカゲル 20×20×20 mm]   ↑y方向
 (+z方向)    (10×10mm角)          (中心)                     [NaI 200×50×50 mm]
                                                              (底面: y=40 mm, シリカ上面+30 mm)
@@ -173,7 +178,9 @@ GUIモードでは作ったモデルを目視できるので、ジオメトリ�
 - メイン関数 (`src/main.cc`) : 実行ファイルで実際に実行しているもの。コマンドで指定したオプションや設定ファイルの読み込み, 上で言及した個別要素の呼び出しなどを行っている。
 
 #### 検出器の設定 (`src/DetectorConstruction.cc`)
-- `World`という, 検出器の外の空気の領域を定義 (50cm×50cm×50cm)
+- `World`という, 検出器の外の空気の領域を定義 ~~(50cm×50cm×50cm)~~ (100cm×100cm×100cm)
+  - [これ](https://kumaroot.readthedocs.io/ja/latest/geant4/geant4-geometry-solid.html#g4box)によると引数の2倍の大きさの箱ができる。
+  - G4Boxの”半径”を引数に取るイメージ。
 - モードによって配置するジオメトリが変わる:
   * **Mode 1** : プラシン正方形（10×10mm, 厚さ0.3mm, z=10mm）とシリカ直方体（2×2×2cm, z=50mm）を配置
   * **Mode 2** : シリカ円筒（半径3cm, 長さ10cm）とNaI直方体（5×5×20cm）を配置
@@ -187,10 +194,13 @@ GUIモードでは作ったモデルを目視できるので、ジオメトリ�
 こういうことでプログラムのソースコードにいちいちベタ書きしなくても, 設定ファイルを分けることで効果的に管理することができる（ミスの防止にもつながる）。
 
 GUIを使用する場合と, そうでない場合 ("batch"と呼ぶ) で設定ファイルを分けている。
-- `vis.mac` : GUIありのときに呼ぶやつ（Mode 1/2/3 共通）
+- `vis.mac` : GUIありのときに呼ぶやつ（Mode 1/2/3/4 共通）
+- `vis_mode4.mac` : Mode 4用のGUI表示（飛跡の色分け, 鉛の表示切り替えメニュー付き）
+- `lead_core.mac` / `lead_all.mac` : Mode 4の鉛の表示切り替え（`vis_mode4.mac`のメニューから呼ばれる）
 - `batch_mode1.mac` : Mode 1のバッチ実行用
 - `batch_mode2.mac` : Mode 2のバッチ実行用
 - `batch_mode3.mac` : Mode 3のバッチ実行用
+- `batch_mode4.mac` : Mode 4のバッチ実行用
 
 `batch_mode2.mac`の方にある以下行は検出器分解能についての設定である（Mode 2のみ有効）:
 ```
@@ -215,7 +225,7 @@ GUIを使用する場合と, そうでない場合 ("batch"と呼ぶ) で設定�
 
 ---
 
-**Mode 2の出力** (`analysis/nai_p2_***.root`)
+**Mode 2の出力** (`analysis/mode2_nai_p2_***.root`)
 
 `G4Simulation_a2-main/`にいる想定でファイルを開けるには
 ```
@@ -243,8 +253,12 @@ nai->Draw("trE1")
 
 ##### 2γと3γのエネルギー分布を重ねて書く (`analysis/`にいるとき)
 ```
-root -l plot.cc
+root -l 'plot_naiE.cc(2)'
 ```
+引数はモード番号。
+- `2`なら`mode2_nai_p2_000.root`と`mode2_nai_p2_100.root`を,
+- `3`なら`mode3_fullChain_p2_000.root`と`mode3_fullChain_p2_100.root`を, 
+- `4`なら`mode4_fullChain_p2_000.root`と`mode4_fullChain_p2_100.root`を読む。
 
 ---
 
