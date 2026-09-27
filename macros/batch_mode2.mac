@@ -7,5 +7,8 @@
 /analysis/b 0.0
 /analysis/c 0.0
 
+# Turn on characteristic X-rays from Pb (75keV)
+/process/em/fluo true
+
 # Beam
 /run/beamOn 100000
