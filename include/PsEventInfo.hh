@@ -2,6 +2,7 @@
 #define PS_EVENT_INFO_HH
 #include <G4VUserEventInformation.hh>
 #include <globals.hh>
+#include <vector>
 
 enum class GammaOrigin { None, Photo, Compton };
 

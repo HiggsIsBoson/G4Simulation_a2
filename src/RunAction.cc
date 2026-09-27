@@ -6,7 +6,7 @@
 
 RunAction::RunAction(int mode)
 : fMode(mode), fa(2.5), fb(0.01), fc(0.0),
-  fOutName(mode==1 ? "plastic_sim" : (mode==3 ? "full_chain" : "nai_spectrum")) {
+  fOutName(mode==1 ? "plastic_sim" : ((mode==3 || mode==4) ? "full_chain" : "nai_spectrum")) {
   fMsg = new G4GenericMessenger(this, "/analysis/", "Analysis controls");
   fMsg->DeclareProperty("a", fa, "Resolution param a (sqrt(keV))");
   fMsg->DeclareProperty("b", fb, "Resolution param b (fraction)");
@@ -19,9 +19,9 @@ RunAction::~RunAction(){ delete fMsg; }
 void RunAction::Book(){
 
   auto man = G4AnalysisManager::Instance();
+  man->SetDefaultFileType("root"); // OpenFileの前にファイルタイプを指定するようにした。拡張子がない状態で/run/beamOnするとエラーで終了したから。
   man->OpenFile(fOutName);
   man->SetVerboseLevel(1);
-  man->SetDefaultFileType("root");
 
   if (fMode == 1) {
     // Mode 1: beta+ through plastic
@@ -37,8 +37,8 @@ void RunAction::Book(){
     fNtP1OutTheta   = man->CreateNtupleDColumn("out_theta");   // outgoing polar angle [rad]
     fNtP1OutPhi     = man->CreateNtupleDColumn("out_phi");     // outgoing azimuth [rad]
     man->FinishNtuple();
-  } else if (fMode == 3) {
-    // Mode 3: full-chain ntuple
+  } else if (fMode == 3 || fMode == 4) {
+    // Mode 3/4: full-chain ntuple
     man->CreateNtuple("chain", "full chain: Na22 → plastic → silica(Ps) → NaI");
     fNtM3GenE        = man->CreateNtupleDColumn("gen_E");        // e+ initial KE [keV]
     fNtM3PlasticEdep = man->CreateNtupleDColumn("plastic_edep"); // energy deposit in plastic [keV]
@@ -72,8 +72,8 @@ void RunAction::EndOfRunAction(const G4Run*){
   man->Write();
   man->CloseFile();
 
-  if (fMode == 3 && fM3NTotal > 0) {
-    G4cout << "\n========== Mode 3 Summary ==========" << G4endl;
+  if ((fMode == 3 || fMode == 4) && fM3NTotal > 0) {
+    G4cout << "\n========== Mode " << fMode << " Summary ==========" << G4endl;
     G4cout << "  Total events        : " << fM3NTotal << G4endl;
     G4cout << "  Stopped in silica   : " << fM3NStopSilica
            << "  (" << 100.*fM3NStopSilica/fM3NTotal << " %)" << G4endl;

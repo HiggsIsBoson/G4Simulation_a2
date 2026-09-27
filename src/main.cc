@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
   auto* UIman = G4UImanager::GetUIpointer();
 
-  if (simMode == 2 || simMode == 3) {
+  if (simMode == 2 || simMode == 3 || simMode == 4) {
     if (!p2_value.empty()){
       UIman->ApplyCommand("/source/p2 " + p2_value);
     } else if (!useUI) {
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
   if (!out_name.empty()){
     UIman->ApplyCommand("/analysis/out " + out_name);
   }
-  else if(!useUI && (simMode == 2 || simMode == 3)){
+  else if(!useUI && (simMode == 2 || simMode == 3 || simMode == 4)){
     std::cout << "Specify the output file from the command line. Abort." << std::endl;
     return 1;
   }

@@ -69,8 +69,8 @@ void EventAction::EndOfEventAction(const G4Event* evt) {
     man->FillNtupleDColumn(run->GetNtP1OutPhi(),     fP1OutPhi);
     man->AddNtupleRow();
     const_cast<RunAction*>(run)->AccumP1(fP1Edep, fP1OutE > 0);
-  } else if (run->GetMode() == 3) {
-    // Mode 3: full-chain ntuple
+  } else if (run->GetMode() == 3 || run->GetMode() == 4) {
+    // Mode 3/4: full-chain ntuple
     G4double genE = 0;
     if (auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation()))
       genE = info->GetBetaE();
