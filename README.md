@@ -127,7 +127,7 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 **Mode 3: フルチェーンシミュレーション（Na22 → プラシン → シリカ(Ps形成) → NaI）**
 
 ```
-./nai_spectrum --mode 3 --p2 0.5 --out ../analysis/full_chain.root ../macros/batch_mode3.mac
+./nai_spectrum --mode 3 --p2 0.5 --out ../analysis/mode3_fullChain_p2_050.root ../macros/batch_mode3.mac
 ```
 
 ここで `--p2` は **pick-off による2γ崩壊の確率**（残り `1-p2` がo-Psの3γ自己崩壊）を指定するオプションである（Mode 2 と同じ意味）。
@@ -146,12 +146,21 @@ Na22から beta+ と 1274.5 keV γ線（等方的）を同時放出し、beta+ �
 
 ---
 
+**Mode 4: Mode3に鉛ブロックなどを追加（2026前期A2の本番セットアップ）**
+```
+./nai_spectrum --mode 4 --p2 0.5 --out ../analysis/mode4_fullChain_p2_050.root ../macros/batch_mode4.mac
+```
+
+
+---
+
 **GUIモード（検出器の3D描画）**
 GUIモードでは作ったモデルを目視できるので、ジオメトリの確認に便利である。
 ```
 ./nai_spectrum --mode 1 --ui ../macros/vis.mac   # Mode 1のジオメトリを表示
 ./nai_spectrum --mode 2 --ui ../macros/vis.mac   # Mode 2のジオメトリを表示
 ./nai_spectrum --mode 3 --ui ../macros/vis.mac   # Mode 3のジオメトリを表示
+./nai_spectrum --mode 4 --ui ../macros/vis.mac   # Mode 4のジオメトリを表示
 ```
 
 <img width="500" height="450" alt="Screenshot 2026-02-09 at 1 03 25" src="https://github.com/user-attachments/assets/37b50789-06ed-4420-a605-ed17a8101fa8" />
