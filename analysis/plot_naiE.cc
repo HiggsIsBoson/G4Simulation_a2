@@ -12,9 +12,17 @@ void plot_naiE(int mode)
     t0 = (TTree*)f0->Get("nai");
     t1 = (TTree*)f1->Get("nai");
   }
+  else if(mode==3){
+    TFile *f0  = new TFile("mode3_fullChain_p2_000.root","read");
+    TFile *f1  = new TFile("mode3_fullChain_p2_100.root","read");
+    t0 = (TTree*)f0->Get("chain");
+    t1 = (TTree*)f1->Get("chain");
+    t0->SetAlias("smE","nai_edep_sm");
+    t1->SetAlias("smE","nai_edep_sm");
+  }
   else{
-    TFile *f0  = new TFile("mode3_p2_000.root","read");
-    TFile *f1  = new TFile("mode3_p2_100.root","read");
+    TFile *f0  = new TFile("mode4_fullChain_p2_000.root","read");
+    TFile *f1  = new TFile("mode4_fullChain_p2_100.root","read");
     t0 = (TTree*)f0->Get("chain");
     t1 = (TTree*)f1->Get("chain");
     t0->SetAlias("smE","nai_edep_sm");
