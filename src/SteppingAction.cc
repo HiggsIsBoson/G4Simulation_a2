@@ -24,8 +24,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
   auto* run = static_cast<const RunAction*>(
     G4RunManager::GetRunManager()->GetUserRunAction());
 
-  if (run->GetMode() == 1 || run->GetMode() == 3) {
-    // ---- Mode 1/3: track beta+ through plastic and silica ----
+  if (run->GetMode() == 1 || run->GetMode() == 3 || run->GetMode() == 4) {
+    // ---- Mode 1/3/4: track beta+ through plastic and silica ----
     if (!fPlasticLog) {
       fPlasticLog = fDet->GetPlasticLogic();
       if (!fPlasticLog)
@@ -74,15 +74,15 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
         auto status = track->GetTrackStatus();
         if (status == fStopAndKill || status == fKillTrackAndSecondaries) {
           fEvt->SetStopSilica(1);
-          if (run->GetMode() == 3)
+          if (run->GetMode() == 3 || run->GetMode() == 4)
             fEvt->SetM3Stop(track->GetPosition());
         }
       }
       return;  // e+に関してはここで終了
     }
 
-    // 以下は trackID != 1 (Mode 3のNaI追跡)
-    if (run->GetMode() != 3) return;
+    // 以下は trackID != 1 (Mode 3/4のNaI追跡)
+    if (run->GetMode() != 3 && run->GetMode() != 4) return;
 
     if (!fNaILog) {
       fNaILog = fDet->GetNaILogic();

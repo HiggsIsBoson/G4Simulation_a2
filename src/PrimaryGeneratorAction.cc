@@ -59,19 +59,21 @@ G4ThreeVector PrimaryGeneratorAction::RandomPointInSilica() const {
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
 
-  if (fMode == 1 || fMode == 3) {
-    // Mode 1/3: Na22 beta+ in +z direction from z=0
-    G4ThreeVector pos(0, 0, fNa22Z);
+  if (fMode == 1 || fMode == 3 || fMode == 4) {
+    // Mode 1/3: Na22 beta+ in +z direction from z=fNa22Z
+    // Mode 4  : Na22 beta+ in +y direction from the origin (must match DetectorConstruction, Mode 4)
+    G4ThreeVector pos = (fMode == 4) ? G4ThreeVector(0, 0, 0) : G4ThreeVector(0, 0, fNa22Z);
+    G4ThreeVector dir = (fMode == 4) ? G4ThreeVector(0, 1, 0) : G4ThreeVector(0, 0, 1);
 
     // e+ primary
     fGun->SetParticleDefinition(fPositron);
     G4double KE = SampleNa22BetaEnergy();
     fGun->SetParticleEnergy(KE);
-    fGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
+    fGun->SetParticleMomentumDirection(dir);
     fGun->SetParticlePosition(pos);
     fGun->GeneratePrimaryVertex(evt);
 
-    if (fMode == 3) {
+    if (fMode == 3 || fMode == 4) {
       // 1274.5 keV de-excitation gamma (Na22→Ne22*→Ne22+γ)
       fGun->SetParticleDefinition(fGamma);
       fGun->SetParticleEnergy(1274.5*keV);
@@ -83,7 +85,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* evt) {
     // gen energyをPsEventInfo経由で保存（MTクローン問題を回避）
     auto* info = static_cast<PsEventInfo*>(evt->GetUserInformation());
     if (!info) { info = new PsEventInfo(); evt->SetUserInformation(info); }
-    info->SetGenBeta(KE/keV, 0., 0.);
+    info->SetGenBeta(KE/keV, dir.theta(), dir.phi());
     return;
   }
 

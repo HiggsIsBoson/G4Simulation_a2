@@ -11,7 +11,7 @@ StackingAction::StackingAction(int mode, EventAction* evt)
 : fMode(mode), fEvt(evt) {}
 
 G4ClassificationOfNewTrack StackingAction::ClassifyNewTrack(const G4Track* track) {
-  if (fMode != 3) return fUrgent;
+  if (fMode != 3 && fMode != 4) return fUrgent;
 
   // e+ がシリカで止まった直後に Geant4 が生成する自動対消滅 511 keV ガンマを殺す
   // （TrackingAction::PostUserTrackingAction が代わりに Ps 崩壊ガンマを注入する）

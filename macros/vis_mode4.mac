@@ -1,0 +1,55 @@
+# Mode 4 (本番セットアップ) 表示用 (白背景・飛跡の色分け・ブロックの輪郭表示・鉛の表示切り替え)
+#   ./nai_spectrum --mode 4 --p2 0.5 --ui ../macros/vis_mode4.mac
+# 起動後, 入力欄に /run/beamOn 20 と打つと飛跡が描かれる
+/control/verbose 1
+/run/verbose 0
+/vis/verbose warnings
+/tracking/verbose 0
+
+/run/initialize
+
+/vis/open OGL 900x900-0+0
+/vis/viewer/set/autoRefresh false
+# 背景色
+/vis/viewer/set/background white
+
+/vis/drawVolume
+/vis/viewer/set/style surface
+# 枠線を描く (鉛ブロックの境目が分かりやすくなる)
+/vis/viewer/set/edge true
+/vis/viewer/set/hiddenMarker true
+/vis/scene/add/axes 0 0 0 5 cm
+
+# 視点: +y を上, 斜め前 (-z 側) の上からみる
+/vis/viewer/set/upVector 0 1 0
+/vis/viewer/set/viewpointVector 1.2 0.9 -1.6
+/vis/viewer/set/lightsVector 1 2 -1
+/vis/viewer/set/targetPoint 0 3 0 cm
+/vis/viewer/zoomTo 1.1
+
+# 飛跡の色分け
+#   e+ 赤, gamma 緑, e- 橙
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/setRGBA e+    0.85 0.0  0.0  1
+/vis/modeling/trajectories/drawByParticleID-0/setRGBA gamma 0.0  0.6  0.0  1
+/vis/modeling/trajectories/drawByParticleID-0/setRGBA e-    0.0  0.5  1.0  1
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts false
+/vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 2
+
+# 最大100イベント重ね書き
+/vis/scene/endOfEventAction accumulate 100
+
+/vis/viewer/set/autoRefresh true
+/vis/viewer/flush
+
+# よく使う操作 (入力欄に打つ):
+#   /run/beamOn 20                                  飛跡を描く
+#   /vis/viewer/set/viewpointVector 0 0 -1          -z 側 (トンネル側) から見る
+#   /vis/viewer/set/viewpointVector 0 1 0.001       真上から見る
+
+# 鉛の表示切り替え (本番セットアップ Mode 4 のみ)
+#   Qtのメニューバーの "Lead" から選ぶ, または入力欄で /control/execute ../macros/lead_core.mac
+/gui/addMenu lead Lead
+/gui/addButton lead "Core only (desk layer + penetration + dodai)" "/control/execute ../macros/lead_core.mac"
+/gui/addButton lead "All lead" "/control/execute ../macros/lead_all.mac"
