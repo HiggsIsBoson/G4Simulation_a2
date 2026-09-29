@@ -17,7 +17,7 @@ TrackingAction::TrackingAction(int mode, EventAction* evt, const PrimaryGenerato
 : fMode(mode), fEvt(evt), fPGA(pga) {}
 
 void TrackingAction::PreUserTrackingAction(const G4Track* track) {
-  if (fMode != 3) return;
+  if (fMode != 3 && fMode != 4) return;
 
   bool isPsOrigin = false;
 
@@ -38,7 +38,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track) {
 }
 
 void TrackingAction::PostUserTrackingAction(const G4Track* track) {
-  if (fMode != 3) return;
+  if (fMode != 3 && fMode != 4) return;
   // primary e+ (trackID==1) だけを処理
   if (track->GetTrackID() != 1) return;
   if (track->GetDefinition() != G4Positron::Positron()) return;

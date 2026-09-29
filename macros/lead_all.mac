@@ -1,0 +1,22 @@
+# 2026前期本番セットアップ (Mode 4) の鉛: 全部表示
+#   GUIの入力欄で /control/execute ../macros/lead_all.mac
+/vis/viewer/set/autoRefresh false
+/vis/geometry/set/visibility penetrationL 0 true
+/vis/geometry/set/visibility footMinusXL 0 true
+/vis/geometry/set/visibility footPlusXL 0 true
+/vis/geometry/set/visibility dodaiL 0 true
+/vis/geometry/set/visibility arch1L 0 true
+/vis/geometry/set/visibility arch2L 0 true
+/vis/geometry/set/visibility twinMinusXL 0 true
+/vis/geometry/set/visibility twinPlusXL 0 true
+/vis/geometry/set/visibility supportArchL 0 true
+/vis/geometry/set/visibility underDodaiL 0 true
+/vis/geometry/set/visibility stackLowerL 0 true
+/vis/geometry/set/visibility stackUpperL 0 true
+/vis/geometry/set/visibility standingL 0 true
+/vis/geometry/set/visibility wallL 0 true
+/vis/geometry/set/visibility pmtSideLowerL 0 true
+/vis/geometry/set/visibility pmtSideUpperL 0 true
+/vis/geometry/set/visibility archTopL 0 true
+/vis/viewer/set/autoRefresh true
+/vis/viewer/rebuild

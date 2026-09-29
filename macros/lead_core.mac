@@ -1,0 +1,23 @@
+# 2026前期本番セットアップ (Mode 4) の鉛: 机の上の下段の基本ブロック (双子・土台の下) + 貫通 + 土台 だけ表示
+#   プラシン・シリカ・NaI は常に表示される
+#   GUIの入力欄で /control/execute ../macros/lead_core.mac
+/vis/viewer/set/autoRefresh false
+/vis/geometry/set/visibility penetrationL 0 true
+/vis/geometry/set/visibility footMinusXL 0 false
+/vis/geometry/set/visibility footPlusXL 0 false
+/vis/geometry/set/visibility dodaiL 0 true
+/vis/geometry/set/visibility arch1L 0 false
+/vis/geometry/set/visibility arch2L 0 false
+/vis/geometry/set/visibility twinMinusXL 0 true
+/vis/geometry/set/visibility twinPlusXL 0 true
+/vis/geometry/set/visibility supportArchL 0 false
+/vis/geometry/set/visibility underDodaiL 0 true
+/vis/geometry/set/visibility stackLowerL 0 false
+/vis/geometry/set/visibility stackUpperL 0 false
+/vis/geometry/set/visibility standingL 0 false
+/vis/geometry/set/visibility wallL 0 false
+/vis/geometry/set/visibility pmtSideLowerL 0 false
+/vis/geometry/set/visibility pmtSideUpperL 0 false
+/vis/geometry/set/visibility archTopL 0 false
+/vis/viewer/set/autoRefresh true
+/vis/viewer/rebuild

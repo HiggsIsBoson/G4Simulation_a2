@@ -22,7 +22,7 @@ void ActionInitialization::Build() const {
   SetUserAction(pga);
   SetUserAction(new SteppingAction(det, evt));
 
-  if (fMode == 3) {
+  if (fMode == 3 || fMode == 4) {
     SetUserAction(new TrackingAction(fMode, evt, pga));
     SetUserAction(new StackingAction(fMode, evt));
   }
