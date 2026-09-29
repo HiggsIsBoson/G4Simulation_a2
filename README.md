@@ -127,7 +127,7 @@ Na22線源から+z方向に単一のbeta+を1本射出し, プラシンでの損
 **Mode 3: フルチェーンシミュレーション（Na22 → プラシン → シリカ(Ps形成) → NaI）**
 
 ```
-./nai_spectrum --mode 3 --p2 0.5 --out ../analysis/mode3_fullChain_p2_050.root ../macros/batch_mode3.mac
+./nai_spectrum --mode 3 --p2 0.0 --out ../analysis/mode3_fullChain_p2_000.root ../macros/batch_mode3.mac
 ```
 
 ここで `--p2` は **pick-off による2γ崩壊の確率**（残り `1-p2` がo-Psの3γ自己崩壊）を指定するオプションである（Mode 2 と同じ意味）。
@@ -148,7 +148,7 @@ Na22から beta+ と 1274.5 keV γ線（等方的）を同時放出し、beta+ �
 
 **Mode 4: Mode3に鉛ブロックなどを追加（2026前期A2の本番セットアップ）**
 ```
-./nai_spectrum --mode 4 --p2 0.5 --out ../analysis/mode4_fullChain_p2_050.root ../macros/batch_mode4.mac
+./nai_spectrum --mode 4 --p2 0.0 --out ../analysis/mode4_fullChain_p2_000.root ../macros/batch_mode4.mac
 ```
 
 
